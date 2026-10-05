@@ -1,4 +1,4 @@
-const CACHE = "orgfinan-v6.8.0";
+const CACHE = "orgfinan-v6.8.1";
 const ASSETS = [
   "./",
   "./index.html",

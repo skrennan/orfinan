@@ -83,6 +83,23 @@ let browser, socket;
   await evaluate(`localStorage.setItem(KEYS.transactions,JSON.stringify([{id:'a',type:'expense',description:'Café da manhã',amount:18.5,category:'Alimentação',date:localToday(),createdAt:1},{id:'b',type:'income',description:'Projeto freelance',amount:450,category:'Freelance',date:localToday(),createdAt:2},{id:'c',type:'expense',description:'Compras da semana',amount:186.7,category:'Alimentação',date:localToday(),createdAt:3}])); renderDashboard();`);
   await screenshot('dashboard-desktop',1280,1000);
   await screenshot('dashboard-mobile',390,844);
+  // Regression: selected transaction types must remain readable despite legacy theme rules.
+  const typeContrast = await evaluate(`(() => {
+    const luminance = color => {
+      const rgb = color.match(/[\\d.]+/g).slice(0,3).map(Number).map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+      return rgb[0]*.2126 + rgb[1]*.7152 + rgb[2]*.0722;
+    };
+    return ['expense','income'].map(type => {
+      const radio = document.querySelector('input[name="transactionType"][value="'+type+'"]');
+      radio.checked = true;
+      const style = getComputedStyle(radio.nextElementSibling);
+      const a = luminance(style.color), b = luminance(style.backgroundColor);
+      return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+    });
+  })()`);
+  assert.ok(typeContrast.every(ratio => ratio >= 4.5), 'Both selected transaction types meet text contrast requirements');
+  await evaluate(`document.querySelector('input[name="transactionType"][value="expense"]').checked=true;`);
+  console.log('PASS readable selected expense/income controls');
   const beforeFilters = await evaluate('localStorage.getItem(KEYS.transactions)');
   await evaluate(`const xssTransactions=getTransactions();xssTransactions[0].description='<img src=x onerror=alert(1)>';localStorage.setItem(KEYS.transactions,JSON.stringify(xssTransactions));renderDashboard();`);
   assert.equal(await evaluate('$("#transactionList").querySelector("img")'),null,'Transaction text never becomes injected HTML');
