@@ -1,6 +1,18 @@
-﻿# Minhas Finanças — V6.6.0
+﻿# Minhas Finanças — V6.7.0
 
-Aplicação estática em HTML, CSS e JavaScript, com visual Fluent/Metro, publicada diretamente pelo Netlify.
+Aplicação estática em HTML, CSS e JavaScript, com visual Fluent/Metro. O Netlify executa `node scripts/build.cjs` e publica somente a pasta `dist/` gerada com os arquivos públicos do app.
+
+## Segurança — versão 6.7
+
+A revisão e seus limites estão em [SECURITY_REVIEW.md](SECURITY_REVIEW.md). Foram corrigidos o cache de respostas da API, isolamento de operações assíncronas entre contas, logout, validação de dados importados e tentativas ilimitadas de sincronização. Bibliotecas passaram a ser locais, com versões fixas e integridade; os cabeçalhos de segurança são definidos em `netlify.toml`.
+
+```powershell
+node tests/security.cjs
+node tests/mobile-modal.cjs --real-charts --real-supabase
+node scripts/build.cjs
+```
+
+O código foi validado localmente. A configuração efetiva do banco ainda requer executar `supabase_security_audit.sql`, revisar `supabase_security_hardening.sql` e testar com duas contas usando `supabase_security_test.sql`. Esses SQLs não foram executados remotamente nesta sessão. O antigo `supabase_setup_v4.sql` foi mantido como referência; o hardening é a migração de segurança atual.
 
 ## Análise do projeto
 
@@ -40,7 +52,7 @@ Cores, superfícies acrílicas, tipografia e animações foram preservadas. O en
 node tests/mobile-modal.cjs --screenshots --real-charts
 ```
 
-O modo `--real-charts` carrega a versão 4.4.7 do Chart.js já utilizada pelo site e mantém uma cópia temporária para próximas execuções. Verifica os quatro gráficos, inclusive o redimensionamento entre desktop e mobile. Autenticação e service worker continuam isolados no teste, sem acesso a contas reais. Capturas são gravadas na pasta temporária do sistema.
+O modo `--real-charts` utiliza a versão local 4.4.7 do Chart.js. `--real-supabase` também utiliza o SDK local verdadeiro, com sessão inicialmente vazia e sem acesso a contas reais. O teste aplica a CSP de produção; o service worker permanece isolado neste teste de interface e é exercitado separadamente em `tests/security.cjs`. Capturas são gravadas na pasta temporária do sistema.
 
 Verificações passaram em 320×568, 390×844, 580×700, 768×1024, 844×390, 1280×800 e 1536×960. Também cobrem troca de dezembro para janeiro, limpeza de filtros, senha, configurações, validação de descrição e ausência de erros JavaScript não tratados no navegador. As rotinas centrais de sincronização foram comparadas antes e depois e permaneceram idênticas.
 
@@ -64,5 +76,6 @@ Verifica abertura e fechamento em 320×568, 390×844, 580×700, 844×390 e 1280�
 A simulação não substitui validação do teclado em aparelhos Android e Safari/iOS. A sincronização real com Supabase não é exercitada pelo teste.
 
 O teste também verifica filtros sem alteração dos dados, navegação para os relatórios, movimento reduzido e navegação por Tab dentro do modal. Capturas opcionais de login e painel são gravadas na pasta temporária do sistema. Chart.js é substituído apenas na verificação de navegação; a renderização real dos gráficos não é exercitada.
+
 
 

@@ -8,29 +8,26 @@ const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'orgfinan-modal-'));
 const realCharts = process.argv.includes('--real-charts');
-let chartSource;
-const stub = `<script>window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}}})};if(navigator.serviceWorker) navigator.serviceWorker.register=async()=>({});</script>`;
+const realSupabase = process.argv.includes('--real-supabase');
+const stub = `window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}}})};`;
+const policy = fs.readFileSync(path.join(root,'netlify.toml'),'utf8').match(/Content-Security-Policy = "([^"]+)"/)[1];
 const server = http.createServer((req, res) => {
   const name = new URL(req.url, 'http://localhost').pathname;
-  if (name === '/chart.js' && chartSource) { res.setHeader('Content-Type','application/javascript'); res.end(chartSource); return; }
-  if (!['/', '/style.css', '/refinements.css', '/app.js'].includes(name)) { res.writeHead(404).end(); return; }
+  res.setHeader('Content-Security-Policy',policy);
+  if (name === '/test-supabase.js') { res.setHeader('Content-Type','application/javascript'); res.end(stub); return; }
+  if (name === '/test-helpers.js') { res.setHeader('Content-Type','application/javascript'); res.end('if(navigator.serviceWorker) navigator.serviceWorker.register=async()=>({});'); return; }
+  if (!['/', '/style.css', '/refinements.css', '/app.js','/financial-validation.js','/vendor/supabase.min.js','/vendor/chart.umd.min.js'].includes(name)) { res.writeHead(404).end(); return; }
   let content = fs.readFileSync(path.join(root, name === '/' ? 'index.html' : name.slice(1)), 'utf8');
-  if (name === '/') content = content.replace(/<script src="https:[^"]+"><\/script>/g, '').replace('<script src="app.js', stub + (realCharts ? '<script src="/chart.js"></script>' : '') + '<script src="app.js');
+  if (name === '/') {
+    if (!realSupabase) content = content.replace(/<script src="vendor\/supabase.min.js"[^>]*><\/script>/,'<script src="test-supabase.js"></script>');
+    if (!realCharts) content = content.replace(/<script src="vendor\/chart.umd.min.js"[^>]*><\/script>/,'');
+    content=content.replace('<script src="app.js','<script src="test-helpers.js"></script><script src="app.js');
+  }
   res.setHeader('Content-Type', name.endsWith('.css') ? 'text/css' : name.endsWith('.js') ? 'application/javascript' : 'text/html');
   res.end(content);
 });
 let browser, socket;
 (async () => {
-  if (realCharts) {
-    const chartCache = path.join(os.tmpdir(),'orgfinan-chartjs-4.4.7.js');
-    if (fs.existsSync(chartCache)) chartSource = fs.readFileSync(chartCache,'utf8');
-    else {
-      const response = await fetch('https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js', {signal:AbortSignal.timeout(20000)});
-      assert.ok(response.ok,'Chart.js download must succeed');
-      chartSource = await response.text();
-      fs.writeFileSync(chartCache,chartSource);
-    }
-  }
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   browser = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', ['--headless=new', '--disable-gpu', '--no-first-run', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: 'ignore' });
   browser.on('error', error => { console.error(error); });
@@ -63,6 +60,8 @@ let browser, socket;
   await call('Page.navigate', {url: `http://127.0.0.1:${server.address().port}/`});
   console.log('Browser loaded local project');
   for (let i = 0; i < 50 && !await evaluate('typeof openTransactionModal === "function"'); i++) await new Promise(resolve => setTimeout(resolve, 100));
+  await evaluate(`const forbiddenScript=document.createElement('script'); forbiddenScript.textContent='window.inlineScriptExecuted=true';document.body.appendChild(forbiddenScript);`);
+  assert.equal(await evaluate('window.inlineScriptExecuted === true'),false,'Production CSP blocks injected inline JavaScript');
   const screenshot = async (name, width, height) => {
     if (!process.argv.includes('--screenshots')) return;
     await call('Emulation.setDeviceMetricsOverride', {width,height,deviceScaleFactor:1,mobile:width<=580});
@@ -85,6 +84,9 @@ let browser, socket;
   await screenshot('dashboard-desktop',1280,1000);
   await screenshot('dashboard-mobile',390,844);
   const beforeFilters = await evaluate('localStorage.getItem(KEYS.transactions)');
+  await evaluate(`const xssTransactions=getTransactions();xssTransactions[0].description='<img src=x onerror=alert(1)>';localStorage.setItem(KEYS.transactions,JSON.stringify(xssTransactions));renderDashboard();`);
+  assert.equal(await evaluate('$("#transactionList").querySelector("img")'),null,'Transaction text never becomes injected HTML');
+  await evaluate(`localStorage.setItem(KEYS.transactions,${JSON.stringify(beforeFilters)});renderDashboard();`);
   await evaluate(`selectFinancialMonth('2026-12'); $('#dashboardView [data-month-step="1"]').click();`);
   assert.equal(await evaluate('selectedMonth()'),'2027-01','Month step crosses year boundary');
   assert.equal(await evaluate('$("#reportMonthFilter").value'),'2027-01','Report month stays synchronized');

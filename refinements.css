@@ -91,6 +91,10 @@ body :where(button, input, select):focus-visible { outline: 2px solid var(--acce
 .filter-context { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:-4px 0 16px; font-size:.78rem; color:var(--muted); }
 .filter-context > span { overflow-wrap:anywhere; min-width:0; }
 .filter-context button { min-height:36px; white-space:nowrap; border:0; border-radius:6px; background:transparent; color:var(--accent); padding:6px 8px; }
+.sync-conflict { padding:20px; margin-bottom:20px; border:1px solid rgba(241,199,138,.3); border-radius:14px; background:rgba(241,199,138,.06); }
+.sync-conflict strong { color:#f1c78a; font-weight:600; }
+.sync-conflict p { color:var(--muted); font-size:.85rem; margin-top:6px; max-width:72ch; }
+.conflict-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
 .empty-state { background:rgba(154,199,255,.025); border:1px dashed rgba(154,199,255,.18); border-radius:12px; color:var(--muted); padding:30px 20px; font-size:.9rem; text-align:center; }
 .transaction-item, .fixed-status, .mini-item, .rank-item { border-radius:10px !important; }
 .transaction-description, .mini-title { font-weight:600; overflow-wrap:anywhere; }

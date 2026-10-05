@@ -12,7 +12,21 @@ const CLOUD = {
   lastCloudUpdate: null,
   lastSyncedSignature: null,
   debounceMs: 3000,
+  accountEpoch: 0,
+  retryCount: 0,
+  loggingOut: false,
+  authEventEpoch: 0,
+  conflict: false,
+  remoteConflict: null,
 };
+
+function accountContext() {
+  return { userId: CLOUD.user?.id || null, epoch: CLOUD.accountEpoch };
+}
+
+function isCurrentAccount(context) {
+  return context.userId === (CLOUD.user?.id || null) && context.epoch === CLOUD.accountEpoch;
+}
 
 const LEGACY_KEYS = {
   settings: "orgfinan-settings-v2",
@@ -69,6 +83,7 @@ const incomeCategories = [
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+$$('input[type="number"][step="0.01"]').forEach((input) => { input.max = String(Number.MAX_SAFE_INTEGER / 100); });
 
 function loadJSON(key, fallback) {
   try {
@@ -1531,6 +1546,7 @@ function migrateLegacyDataOnceForUser() {
   if (alreadyMigratedTo || currentAccountHasLocalData() || !legacyHasMeaningfulData()) {
     return false;
   }
+  if (!confirm("Há dados antigos sem conta neste aparelho. Eles são seus e você deseja vinculá-los à conta atual?")) return false;
 
   const data = legacyPayload();
 
@@ -1617,7 +1633,7 @@ function hasMeaningfulLocalData(payload = localFinancialPayload()) {
 }
 
 function applyCloudPayload(data) {
-  if (!data || typeof data !== "object") return;
+  data = FinancialValidation.normalizeFinancialData(data);
 
   CLOUD.suppressLocalSync = true;
   try {
@@ -1662,7 +1678,7 @@ function updateSyncUI(text, kind = "") {
   }
 }
 
-async function ensureProfile(user) {
+async function ensureProfile(user, context = accountContext()) {
   if (!user || !navigator.onLine) return;
 
   const lastChecked = Number(localStorage.getItem(KEYS.profileCheckedAt) || 0);
@@ -1674,6 +1690,7 @@ async function ensureProfile(user) {
   const { error } = await supabaseClient
     .from("profiles")
     .upsert({ id: user.id, email: user.email, name }, { onConflict: "id" });
+  if (!isCurrentAccount(context)) return;
 
   if (error) {
     console.warn("Profile:", error.message);
@@ -1683,12 +1700,12 @@ async function ensureProfile(user) {
   localStorage.setItem(KEYS.profileCheckedAt, String(Date.now()));
 }
 
-async function fetchCloudFinancialData() {
-  if (!CLOUD.user) return null;
+async function fetchCloudFinancialData(context = accountContext()) {
+  if (!context.userId) return null;
   const { data, error } = await supabaseClient
     .from("financial_data")
     .select("data, updated_at")
-    .eq("user_id", CLOUD.user.id)
+    .eq("user_id", context.userId)
     .maybeSingle();
 
   if (error) throw error;
@@ -1697,6 +1714,13 @@ async function fetchCloudFinancialData() {
 
 async function uploadLocalToCloud({ silent = false, force = false } = {}) {
   if (!CLOUD.user) return;
+  if (CLOUD.conflict && !force) {
+    updateSyncUI("Há alterações diferentes nos aparelhos — escolha quais dados manter", "sync-warn");
+    return false;
+  }
+  const context = accountContext();
+  let failed = false;
+  let retryable = true;
 
   if (!navigator.onLine) {
     markSyncDirty();
@@ -1735,53 +1759,71 @@ async function uploadLocalToCloud({ silent = false, force = false } = {}) {
     const { error } = await supabaseClient
       .from("financial_data")
       .upsert({
-        user_id: CLOUD.user.id,
+        user_id: context.userId,
         data: payload,
         updated_at: now,
       }, { onConflict: "user_id" });
+    if (!isCurrentAccount(context)) return false;
 
     if (error) throw error;
 
     CLOUD.lastCloudUpdate = now;
     localStorage.setItem(KEYS.lastSync, now);
     markSyncClean(signature);
+    CLOUD.retryCount = 0;
     updateSyncUI(`Sincronizado em ${new Date(now).toLocaleString("pt-BR")}`, "sync-ok");
+    return true;
   } catch (error) {
+    if (!isCurrentAccount(context)) return false;
+    failed = true;
+    retryable = ![400, 401, 403].includes(Number(error.status || error.statusCode)) && !["42501", "23514"].includes(error.code);
     console.error(error);
     markSyncDirty();
     updateSyncUI("Falha ao sincronizar — seus dados continuam salvos localmente", "sync-error");
     if (!silent) toast("Não foi possível sincronizar com a nuvem.");
+    return false;
   } finally {
+    // A previous account's response must never modify the current account's state.
+    if (!isCurrentAccount(context)) return;
     CLOUD.syncing = false;
 
     // If something changed while a request was in flight, one new grouped sync is enough.
-    if (CLOUD.pendingSync || hasUnsyncedChanges()) {
+    if (!CLOUD.loggingOut && (CLOUD.pendingSync || payloadSignature(localFinancialPayload()) !== signature)) {
       CLOUD.pendingSync = false;
+      scheduleCloudSync();
+    } else if (failed && retryable && !CLOUD.loggingOut && navigator.onLine && CLOUD.retryCount < 3) {
+      scheduleCloudSync({ retry: true });
+    } else if (!failed && !CLOUD.loggingOut && hasUnsyncedChanges()) {
       scheduleCloudSync();
     }
   }
 }
 
-function scheduleCloudSync() {
+function scheduleCloudSync({ retry = false } = {}) {
+  if (!CLOUD.user || CLOUD.loggingOut || CLOUD.conflict) return;
+  const context = accountContext();
   clearTimeout(CLOUD.syncTimer);
   markSyncDirty();
-  updateSyncUI("Alterações salvas • sincronização em instantes", "sync-warn");
+  if (!retry) CLOUD.retryCount = 0;
+  const delay = retry ? [10000, 30000, 60000][CLOUD.retryCount++] : CLOUD.debounceMs;
+  updateSyncUI(retry ? `Salvo no aparelho • nova tentativa em ${delay / 1000}s` : "Alterações salvas • sincronização em instantes", "sync-warn");
 
   CLOUD.syncTimer = setTimeout(() => {
     CLOUD.syncTimer = null;
-    uploadLocalToCloud({ silent: true });
-  }, CLOUD.debounceMs);
+    if (isCurrentAccount(context)) uploadLocalToCloud({ silent: true });
+  }, delay);
 }
 
-async function reconcileCloudAndLocal() {
+async function reconcileCloudAndLocal(context = accountContext()) {
   updateSyncUI("Carregando seus dados...", "sync-warn");
 
   CLOUD.lastSyncedSignature = localStorage.getItem(KEYS.lastSignature);
 
   let cloudRow = null;
   try {
-    cloudRow = await fetchCloudFinancialData();
+    cloudRow = await fetchCloudFinancialData(context);
   } catch (error) {
+    if (!isCurrentAccount(context)) return;
     console.error(error);
     CLOUD.ready = true;
     updateSyncUI(
@@ -1794,23 +1836,45 @@ async function reconcileCloudAndLocal() {
     );
     return;
   }
+  if (!isCurrentAccount(context)) return;
 
   if (cloudRow) {
+    try {
+      cloudRow.data = FinancialValidation.normalizeFinancialData(cloudRow.data);
+    } catch (error) {
+      CLOUD.ready = false;
+      updateSyncUI("Dados da nuvem inválidos — os dados locais foram preservados", "sync-error");
+      return;
+    }
     CLOUD.lastCloudUpdate = cloudRow.updated_at;
 
     const localModified = localStorage.getItem(KEYS.localModified);
     const cloudModified = cloudRow.data?.local_modified_at || cloudRow.updated_at;
     const localHasUnsyncedWork = currentAccountHasLocalData() && isSyncDirty();
+    if (localHasUnsyncedWork && !isDateAfter(localModified, cloudModified)) {
+      CLOUD.ready = true;
+      CLOUD.conflict = true;
+      CLOUD.remoteConflict = cloudRow;
+      $("#syncConflict").classList.remove("hidden");
+      updateSyncUI("Há alterações locais e dados mais recentes na nuvem — escolha quais manter", "sync-warn");
+      return;
+    }
 
     // Preserve offline/local edits instead of silently overwriting them.
     if (localHasUnsyncedWork && isDateAfter(localModified, cloudModified)) {
       CLOUD.ready = true;
       await uploadLocalToCloud({ silent: true });
-      updateSyncUI("Alterações locais enviadas para a nuvem", "sync-ok");
       return;
     }
 
-    applyCloudPayload(cloudRow.data || {});
+    try {
+      applyCloudPayload(cloudRow.data || {});
+    } catch (error) {
+      console.error(error);
+      CLOUD.ready = false;
+      updateSyncUI("Dados da nuvem inválidos — os dados locais foram preservados", "sync-error");
+      return;
+    }
     localStorage.setItem(KEYS.lastSync, cloudRow.updated_at || new Date().toISOString());
     markSyncClean();
     CLOUD.ready = true;
@@ -1830,7 +1894,6 @@ async function reconcileCloudAndLocal() {
     CLOUD.ready = true;
     markSyncDirty();
     await uploadLocalToCloud({ silent: true });
-    updateSyncUI("Dados antigos vinculados a esta conta e sincronizados", "sync-ok");
     return;
   }
 
@@ -1841,17 +1904,73 @@ async function reconcileCloudAndLocal() {
 }
 
 async function enterAuthenticatedApp(user) {
+  clearTimeout(CLOUD.syncTimer);
+  CLOUD.accountEpoch += 1;
   CLOUD.user = user;
   CLOUD.ready = false;
+  CLOUD.syncing = false;
+  CLOUD.pendingSync = false;
+  CLOUD.retryCount = 0;
+  CLOUD.loggingOut = false;
+  CLOUD.conflict = false;
+  CLOUD.remoteConflict = null;
+  CLOUD.lastSyncedSignature = null;
+  const context = accountContext();
+  clearAccountScreen();
+  showAuthScreen("Carregando os dados desta conta...");
 
   $("#accountEmail").textContent = user.email || "Conta";
   $("#settingsAccountEmail").textContent = user.email || "Conta conectada";
 
-  await ensureProfile(user);
-  await reconcileCloudAndLocal();
+  await ensureProfile(user, context);
+  if (!isCurrentAccount(context)) return;
+  await reconcileCloudAndLocal(context);
+  if (!isCurrentAccount(context)) return;
 
   if (hasCompletedSetup()) showDashboard();
   else showOnboarding();
+}
+
+function clearAccountScreen() {
+  $("#syncConflict").classList.add("hidden");
+  closeTransactionModal();
+  closeSettingsDialog();
+  state.setupIncomes = [];
+  state.setupFixed = [];
+  state.setupStep = 1;
+  transactionFilters.type = "all";
+  transactionFilters.search = "";
+  $("#transactionSearch").value = "";
+  $$("[data-transaction-filter]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.transactionFilter === "all")));
+  $$("#transactionList, #fixedStatusList, #settingsIncomeList, #settingsFixedList, #setupIncomeList, #setupFixedList, #topExpensesList, #reportTextSummary, #reportPendingList, #reportPaidList").forEach((element) => { element.textContent = ""; });
+  Object.keys(reportCharts).forEach(destroyChart);
+  $("#reportsView").classList.add("hidden");
+  $("#dashboardView").classList.remove("hidden");
+  $("#transactionForm").reset();
+  $("#transactionDate").value = localToday();
+  fillTransactionCategories();
+  $("#accountEmail").textContent = "";
+  $("#settingsAccountEmail").textContent = "Conta";
+  $("#authPassword").value = "";
+  $("#authPassword").type = "password";
+  $("#togglePassword").setAttribute("aria-pressed", "false");
+  $("#togglePassword").setAttribute("aria-label", "Mostrar senha");
+}
+
+function leaveAuthenticatedApp(message = "Sua sessão foi encerrada. Entre novamente.") {
+  clearTimeout(CLOUD.syncTimer);
+  CLOUD.accountEpoch += 1;
+  CLOUD.user = null;
+  CLOUD.ready = false;
+  CLOUD.syncing = false;
+  CLOUD.pendingSync = false;
+  CLOUD.lastSyncedSignature = null;
+  CLOUD.retryCount = 0;
+  CLOUD.loggingOut = false;
+  CLOUD.conflict = false;
+  CLOUD.remoteConflict = null;
+  clearAccountScreen();
+  showAuthScreen(message);
 }
 
 async function initializeV4() {
@@ -1861,11 +1980,14 @@ async function initializeV4() {
 
   setAuthMode("login");
 
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session?.user) {
-    await enterAuthenticatedApp(session.user);
-  } else {
-    showAuthScreen();
+  try {
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    if (session?.user) await enterAuthenticatedApp(session.user);
+    else showAuthScreen();
+  } catch (error) {
+    console.error(error);
+    leaveAuthenticatedApp("Não foi possível abrir a sessão. Entre novamente.");
   }
 }
 
@@ -1921,17 +2043,25 @@ $("#googleLoginBtn").addEventListener("click", async () => {
 });
 
 $("#logoutBtn").addEventListener("click", async () => {
+  if (CLOUD.loggingOut) return;
+  const context = accountContext();
+  CLOUD.loggingOut = true;
+  $("#logoutBtn").disabled = true;
   clearTimeout(CLOUD.syncTimer);
-  if (CLOUD.user && navigator.onLine && hasUnsyncedChanges()) {
-    await uploadLocalToCloud({ silent: true });
+  try {
+    if (CLOUD.user && navigator.onLine && hasUnsyncedChanges()) await uploadLocalToCloud({ silent: true });
+    if (!isCurrentAccount(context)) return;
+    const { error } = await supabaseClient.auth.signOut({ scope: "local" });
+    if (error) throw error;
+    if (isCurrentAccount(context)) leaveAuthenticatedApp("Você saiu da sua conta. Seus dados locais serão usados somente ao entrar novamente nesta conta.");
+  } catch (error) {
+    if (isCurrentAccount(context)) {
+      CLOUD.loggingOut = false;
+      toast("Não foi possível encerrar a sessão. Tente sair novamente.");
+    }
+  } finally {
+    $("#logoutBtn").disabled = false;
   }
-  await supabaseClient.auth.signOut();
-  CLOUD.user = null;
-  CLOUD.ready = false;
-  CLOUD.pendingSync = false;
-  CLOUD.lastSyncedSignature = null;
-  closeSettingsDialog();
-  showAuthScreen("Você saiu da sua conta. Cada usuário mantém seu próprio cache local.");
 });
 
 $("#syncNowBtn").addEventListener("click", () => uploadLocalToCloud());
@@ -1974,8 +2104,11 @@ $("#importBackupInput").addEventListener("change", async (event) => {
   if (!file) return;
 
   try {
+    const context = accountContext();
+    if (file.size > 5 * 1024 * 1024) throw new Error("Backup maior que 5 MB.");
     const parsed = JSON.parse(await file.text());
-    const data = parsed.financial_data || parsed;
+    if (!isCurrentAccount(context)) return;
+    const data = FinancialValidation.normalizeFinancialData(parsed.financial_data || parsed);
 
     if (!data || typeof data !== "object") throw new Error("Arquivo inválido.");
     if (!confirm("Importar este backup substituirá os dados financeiros atuais desta conta. Continuar?")) {
@@ -1989,8 +2122,10 @@ $("#importBackupInput").addEventListener("change", async (event) => {
       paidFixed: data.paidFixed || {},
       local_modified_at: new Date().toISOString(),
     });
+    markSyncDirty();
 
     if (CLOUD.user) await uploadLocalToCloud();
+    if (!isCurrentAccount(context)) return;
     if (hasCompletedSetup()) showDashboard();
     else showOnboarding();
     renderSettingsLists();
@@ -2004,10 +2139,52 @@ $("#importBackupInput").addEventListener("change", async (event) => {
 });
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
+  const authEventEpoch = ++CLOUD.authEventEpoch;
   if (event === "SIGNED_OUT") {
-    CLOUD.user = null;
-    CLOUD.ready = false;
+    leaveAuthenticatedApp();
+  } else if (["SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event) && session?.user && session.user.id !== CLOUD.user?.id) {
+    // Supabase calls must run outside the auth callback's lock.
+    setTimeout(() => {
+      if (authEventEpoch !== CLOUD.authEventEpoch) return;
+      if (session.user.id !== CLOUD.user?.id) enterAuthenticatedApp(session.user).catch(() => {
+        if (CLOUD.user?.id === session.user.id) leaveAuthenticatedApp("Não foi possível carregar sua conta.");
+      });
+    }, 0);
   }
+});
+
+$("#keepLocalData").addEventListener("click", async () => {
+  if (!CLOUD.conflict) return;
+  const context = accountContext();
+  $("#keepLocalData").disabled = true;
+  $("#useCloudData").disabled = true;
+  try {
+    const success = await uploadLocalToCloud({ force: true });
+    if (!isCurrentAccount(context)) return;
+    if (success) {
+      CLOUD.conflict = false;
+      CLOUD.remoteConflict = null;
+      $("#syncConflict").classList.add("hidden");
+      // Changes made while uploading still need their grouped sync.
+      if (hasUnsyncedChanges()) scheduleCloudSync();
+    }
+  } finally {
+    $("#keepLocalData").disabled = false;
+    $("#useCloudData").disabled = false;
+  }
+});
+
+$("#useCloudData").addEventListener("click", () => {
+  if (!CLOUD.conflict || !CLOUD.remoteConflict) return;
+  if (!confirm("Usar os dados da nuvem substituirá as alterações ainda não enviadas deste aparelho. Continuar?")) return;
+  const row = CLOUD.remoteConflict;
+  applyCloudPayload(row.data);
+  localStorage.setItem(KEYS.lastSync, row.updated_at || new Date().toISOString());
+  CLOUD.conflict = false;
+  CLOUD.remoteConflict = null;
+  $("#syncConflict").classList.add("hidden");
+  updateSyncUI("Dados da nuvem aplicados nesta conta", "sync-ok");
+  hasCompletedSetup() ? showDashboard() : showOnboarding();
 });
 
 initializeV4();
@@ -2100,7 +2277,7 @@ let settingsDialogPreviousOverflow;
 
 function setDialogBackgroundInert(inert) {
   if (inert) {
-    $$(".app-header, #authScreen, #onboarding, #dashboard, .bottom-nav, #iosInstallBanner").forEach((element) => {
+    $$(".app-header, #authScreen, #onboarding, #dashboard, #syncConflict, .bottom-nav, #iosInstallBanner").forEach((element) => {
       if (!element.inert) {
         element.inert = true;
         dialogBackgroundElements.add(element);
