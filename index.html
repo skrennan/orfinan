@@ -9,13 +9,20 @@
   <meta name="apple-mobile-web-app-title" content="Minhas Finanças" />
   <link rel="apple-touch-icon" href="icons/icon-192.svg" />
   <meta name="description" content="Controle financeiro pessoal simples, instalável e offline." />
-  <link rel="manifest" href="manifest.json?v=6.5.0" />
+  <link rel="manifest" href="manifest.json?v=6.6.0" />
   <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css?v=6.5.0" />
-  <link rel="stylesheet" href="refinements.css?v=6.5.0" />
+  <link rel="stylesheet" href="style.css?v=6.6.0" />
+  <link rel="stylesheet" href="refinements.css?v=6.6.0" />
   <title>Minhas Finanças</title>
 </head>
 <body>
+  <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.6-7.95 6 6 0 0 1 11.5-1.8A5 5 0 0 1 18 18H7Z"/><path d="m9 13 3-3 3 3m-3-3v7"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><path d="m10 3-.8 3-2.4 1-2.7-.9-2 3.5 2 2.1v2.6l-2 2.1 2 3.5 2.7-.9 2.4 1 .8 3h4l.8-3 2.4-1 2.7.9 2-3.5-2-2.1v-2.6l2-2.1-2-3.5-2.7.9-2.4-1L14 3Z"/><circle cx="12" cy="13" r="3"/></symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-left" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+    <symbol id="icon-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+  </svg>
   <div class="fluent-wallpaper" aria-hidden="true"></div>
   <div id="toast" class="toast" aria-live="polite"></div>
 
@@ -31,8 +38,8 @@
         <div id="accountBadge" class="account-badge hidden">
           <span id="accountEmail"></span>
         </div>
-        <button id="syncBtn" class="icon-btn hidden" type="button" title="Sincronizar agora" aria-label="Sincronizar agora">☁️</button>
-        <button id="settingsBtn" class="icon-btn hidden" type="button" title="Configurações" aria-label="Configurações">⚙️</button>
+        <button id="syncBtn" class="icon-btn sync-control hidden" type="button" title="Sincronizar agora" aria-label="Sincronizar agora"><svg class="ui-icon" aria-hidden="true"><use href="#icon-cloud"/></svg><span id="headerSyncLabel">Sincronizar</span><span class="sync-state-dot" aria-hidden="true"></span></button>
+        <button id="settingsBtn" class="icon-btn hidden" type="button" title="Configurações" aria-label="Configurações"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg></button>
       </div>
     </div>
   </header>
@@ -79,7 +86,7 @@
 
           <label>
             Senha
-            <input id="authPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Mínimo 6 caracteres" required />
+            <span class="password-field"><input id="authPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Mínimo 6 caracteres" required /><button id="togglePassword" type="button" aria-label="Mostrar senha" aria-pressed="false" aria-controls="authPassword"><svg class="ui-icon" aria-hidden="true"><use href="#icon-eye"/></svg></button></span>
           </label>
 
           <button id="authSubmitBtn" class="btn btn-primary auth-main-btn" type="submit">Entrar</button>
@@ -261,10 +268,14 @@
           <p id="editorialDate">Controle claro. Decisões melhores.</p>
         </div>
 
-        <label class="editorial-month">
-          <span>Período</span>
-          <input id="monthFilter" type="month" />
-        </label>
+        <div class="period-control">
+          <div class="period-stepper">
+            <button class="period-arrow" type="button" data-month-step="-1" aria-label="Mês anterior"><svg class="ui-icon" aria-hidden="true"><use href="#icon-left"/></svg></button>
+            <label class="editorial-month"><span>Período</span><input id="monthFilter" type="month" /></label>
+            <button class="period-arrow" type="button" data-month-step="1" aria-label="Próximo mês"><svg class="ui-icon" aria-hidden="true"><use href="#icon-right"/></svg></button>
+          </div>
+          <button class="period-today hidden" type="button" data-current-month>Voltar ao mês atual</button>
+        </div>
       </section>
 
       <section class="editorial-balance">
@@ -352,7 +363,8 @@
         <article class="panel">
           <div class="panel-head">
             <div>
-              <h3>Próximas contas</h3>
+              <h3>Contas do mês</h3>
+              <p id="fixedPaymentSummary" class="section-description"></p>
             </div>
           </div>
 
@@ -376,6 +388,7 @@
             <button type="button" data-transaction-filter="income" aria-pressed="false">Receitas</button>
           </div>
         </div>
+        <div class="filter-context hidden" id="filterContext"><span id="filterDescription"></span><button id="clearTransactionFilters" type="button">Limpar filtros</button></div>
         <div id="emptyTransactions" class="empty-state">Seu histórico começa com o primeiro lançamento. Use Novo para registrar uma receita ou despesa.</div>
         <div id="transactionList" class="transaction-list"></div>
       </section>
@@ -386,9 +399,15 @@
           <div>
             <p class="eyebrow">ANÁLISE</p>
             <h2>Leitura do seu mês</h2>
+            <p class="section-description" id="reportPeriodDescription"></p>
           </div>
 
           <div class="report-filter-row">
+            <div class="period-stepper report-month-stepper">
+              <button class="period-arrow" type="button" data-month-step="-1" aria-label="Mês anterior"><svg class="ui-icon" aria-hidden="true"><use href="#icon-left"/></svg></button>
+              <label>Mês de referência<input id="reportMonthFilter" type="month" /></label>
+              <button class="period-arrow" type="button" data-month-step="1" aria-label="Próximo mês"><svg class="ui-icon" aria-hidden="true"><use href="#icon-right"/></svg></button>
+            </div>
             <label>
               Período
               <select id="reportPeriod">
@@ -429,6 +448,7 @@
         </section>
 
         
+      <p id="reportAccountContext" class="report-account-context"></p>
       <section class="status-report-grid">
         <article class="status-report-card pending">
           <span>A PAGAR</span>
@@ -473,7 +493,7 @@
               </div>
             </div>
             <div class="chart-wrap">
-              <canvas id="categoryChart"></canvas>
+              <canvas id="categoryChart" role="img" aria-label="Despesas por categoria. Os totais estão no relatório financeiro abaixo."></canvas>
             </div>
           </article>
 
@@ -485,7 +505,7 @@
               </div>
             </div>
             <div class="chart-wrap">
-              <canvas id="fixedVariableChart"></canvas>
+              <canvas id="fixedVariableChart" role="img" aria-label="Composição de gastos fixos e variáveis. Os totais estão no relatório financeiro abaixo."></canvas>
             </div>
           </article>
 
@@ -497,7 +517,7 @@
               </div>
             </div>
             <div class="chart-wrap chart-wrap-wide">
-              <canvas id="monthlyChart"></canvas>
+              <canvas id="monthlyChart" role="img" aria-label="Receitas e despesas por mês."></canvas>
             </div>
           </article>
 
@@ -509,7 +529,7 @@
               </div>
             </div>
             <div class="chart-wrap chart-wrap-wide">
-              <canvas id="balanceChart"></canvas>
+              <canvas id="balanceChart" role="img" aria-label="Evolução do saldo mensal."></canvas>
             </div>
           </article>
         </section>
@@ -585,7 +605,7 @@
               <span>Valor</span>
               <div class="amount-input-wrap">
                 <small>R$</small>
-                <input id="transactionAmount" type="number" min="0.01" step="0.01" placeholder="0,00" required />
+                <input id="transactionAmount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0,00" aria-label="Valor do lançamento em reais" required />
               </div>
             </div>
 
@@ -617,13 +637,13 @@
 
     <!-- SETTINGS -->
     <section id="settingsPanel" class="modal-backdrop hidden">
-      <div class="modal">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="modal-head">
           <div>
             <p class="eyebrow">Configurações</p>
-            <h2>Receitas e gastos fixos</h2>
+            <h2 id="settingsTitle">Receitas e gastos fixos</h2>
           </div>
-          <button id="closeSettings" class="icon-btn" type="button">✕</button>
+          <button id="closeSettings" class="icon-btn" type="button" aria-label="Fechar configurações">✕</button>
         </div>
 
         
@@ -636,7 +656,7 @@
           <div class="cloud-actions">
             <button id="syncNowBtn" class="btn btn-secondary" type="button">Sincronizar agora</button>
             <button id="exportBackupBtn" class="btn btn-secondary" type="button">Exportar backup</button>
-            <label class="btn btn-secondary import-label">
+            <label class="btn btn-secondary import-label" tabindex="0" role="button">
               Importar backup
               <input id="importBackupInput" type="file" accept=".json,application/json" hidden />
             </label>
@@ -678,7 +698,6 @@
               </div>
             </form>
             <div id="settingsIncomeList" class="setup-list"></div>
-            <button id="resetAppBtn" class="btn btn-danger" type="button">Apagar dados e recomeçar</button>
           </div>
 
           <div>
@@ -712,6 +731,7 @@
             <div id="settingsFixedList" class="setup-list"></div>
           </div>
         </div>
+        <div class="settings-danger-zone"><div><h3>Recomeçar sua organização</h3><p>Apaga os dados financeiros desta conta. Exporte um backup antes, se quiser guardá-los.</p></div><button id="resetAppBtn" class="btn btn-danger" type="button">Apagar dados e recomeçar</button></div>
       </div>
     </section>
   </main>
@@ -753,6 +773,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=6.5.0"></script>
+  <script src="app.js?v=6.6.0"></script>
 </body>
 </html>

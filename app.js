@@ -370,6 +370,11 @@ function categoryIcon(category, type) {
 
 $("#transactionForm").addEventListener("submit", (event) => {
   event.preventDefault();
+  if (!$("#transactionDescription").value.trim()) {
+    $("#transactionDescription").setCustomValidity("Escreva uma descrição para o lançamento.");
+    $("#transactionDescription").reportValidity();
+    return;
+  }
 
   const transaction = {
     id: uid(),
@@ -393,6 +398,8 @@ $("#transactionForm").addEventListener("submit", (event) => {
   renderDashboard();
   toast("Lançamento salvo.");
 });
+
+$("#transactionDescription").addEventListener("input", () => $("#transactionDescription").setCustomValidity(""));
 
 function selectedMonth() {
   return $("#monthFilter").value || currentMonth();
@@ -464,6 +471,10 @@ function renderFixedStatus(settings) {
 
   const month = selectedMonth();
   const fixedExpenses = settings?.fixedExpenses || [];
+  const paidCount = fixedExpenses.filter((expense) => getFixedPaymentStatus(month, expense.id).status === "paid").length;
+  $("#fixedPaymentSummary").textContent = fixedExpenses.length
+    ? `${paidCount} de ${fixedExpenses.length} ${fixedExpenses.length === 1 ? "conta paga" : "contas pagas"}`
+    : "Seus compromissos recorrentes aparecem aqui.";
 
   if (!fixedExpenses.length) {
     list.innerHTML = `<div class="payment-report-empty">Nenhuma conta fixa cadastrada.</div>`;
@@ -478,7 +489,7 @@ function renderFixedStatus(settings) {
       <div class="fixed-status">
         <div>
           <strong>${escapeHTML(expense.name || "Conta fixa")}</strong>
-          <small>${isPaid ? formatPaidAt(payment.paidAt) : "A pagar neste mês"}</small>
+          <small>${isPaid ? formatPaidAt(payment.paidAt) : `Vencimento: dia ${Math.min(Number(expense.day) || 1, new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate())}`} · ${escapeHTML(expense.category || "Outros")}</small>
         </div>
         <div class="fixed-status-right">
           <strong>${money(Number(expense.amount || 0))}</strong>
@@ -493,7 +504,8 @@ function renderFixedStatus(settings) {
               : `<button
                   class="status-btn pending"
                   type="button"
-                  data-fixed-id="${expense.id}"
+                  data-fixed-id="${escapeHTML(expense.id)}"
+                  aria-label="Marcar ${escapeHTML(expense.name || "conta fixa")} como paga"
                   data-payment-status="pending"
                 >Marcar como pago</button>`
           }
@@ -530,6 +542,10 @@ function renderTransactions(transactions) {
     ? "Nenhuma movimentação encontrada. Experimente outra busca ou selecione Todas."
     : "Seu histórico começa com o primeiro lançamento. Use Novo para registrar uma receita ou despesa.";
   $("#transactionResultCount").textContent = `${filtered.length} de ${transactions.length} ${transactions.length === 1 ? "lançamento" : "lançamentos"} no período`;
+  const filtersActive = Boolean(search || transactionFilters.type !== "all");
+  $("#filterContext").classList.toggle("hidden", !filtersActive);
+  const filterLabel = transactionFilters.type === "income" ? "Receitas" : transactionFilters.type === "expense" ? "Despesas" : "Todas as movimentações";
+  $("#filterDescription").textContent = `${filterLabel}${search ? ` com “${transactionFilters.search.trim()}”` : ""}`;
 
   filtered.forEach((item) => {
     const node = $("#transactionTemplate").content.cloneNode(true);
@@ -546,6 +562,7 @@ function renderTransactions(transactions) {
     value.classList.add(item.type);
 
     node.querySelector(".delete-transaction").dataset.id = item.id;
+    node.querySelector(".delete-transaction").setAttribute("aria-label", `Excluir lançamento: ${item.description}`);
     target.appendChild(node);
   });
 }
@@ -553,6 +570,15 @@ function renderTransactions(transactions) {
 $("#transactionSearch").addEventListener("input", (event) => {
   transactionFilters.search = event.target.value;
   renderTransactions(monthTransactions());
+});
+
+$("#clearTransactionFilters").addEventListener("click", () => {
+  transactionFilters.type = "all";
+  transactionFilters.search = "";
+  $("#transactionSearch").value = "";
+  $$("[data-transaction-filter]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.transactionFilter === "all")));
+  renderTransactions(monthTransactions());
+  $("#transactionSearch").focus({ preventScroll: true });
 });
 
 $$("[data-transaction-filter]").forEach((button) => {
@@ -682,6 +708,8 @@ function renderHeroSummary({ baseIncome, extraIncome, fixed, variable, balance }
   $("#budgetCommitment").textContent = `${commitment.toFixed(1).replace(".", ",")}%`;
   $("#budgetMeter").style.width = `${Math.min(commitment, 100)}%`;
   $(".commitment-meter").setAttribute("aria-valuenow", String(Math.min(commitment, 100)));
+  $(".commitment-meter").setAttribute("aria-valuetext", `${commitment.toFixed(1).replace(".", ",")}% da renda comprometida`);
+  $(".commitment-meter").classList.toggle("commitment-high", commitment > 100);
   const pending = getFixedStatusDataset(selectedMonth()).filter((item) => item.status !== "paid");
   const pendingTotal = pending.reduce((sum, item) => sum + item.amount, 0);
   $("#budgetInsight").textContent = pending.length
@@ -710,6 +738,7 @@ function renderHeroSummary({ baseIncome, extraIncome, fixed, variable, balance }
 
 function renderDashboard() {
   updateEditorialGreeting();
+  updatePeriodControls();
   const settings = getSettings();
   if (!settings) return;
 
@@ -757,6 +786,32 @@ function renderDashboard() {
 }
 
 $("#monthFilter").addEventListener("change", renderDashboard);
+
+function updatePeriodControls() {
+  $("#reportMonthFilter").value = selectedMonth();
+  $$('[data-current-month]').forEach((button) => button.classList.toggle("hidden", selectedMonth() === currentMonth()));
+}
+
+function selectFinancialMonth(month) {
+  if (!/^\d{4}-\d{2}$/.test(month) || Number(month.slice(5)) < 1 || Number(month.slice(5)) > 12) return;
+  $("#monthFilter").value = month;
+  renderDashboard();
+}
+
+$$("[data-month-step]").forEach((button) => button.addEventListener("click", () => {
+  const [year, month] = selectedMonth().split("-").map(Number);
+  const next = new Date(year, month - 1 + Number(button.dataset.monthStep), 1);
+  selectFinancialMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
+}));
+$$("[data-current-month]").forEach((button) => button.addEventListener("click", () => selectFinancialMonth(currentMonth())));
+$("#reportMonthFilter").addEventListener("change", (event) => selectFinancialMonth(event.target.value));
+
+$("#togglePassword").addEventListener("click", () => {
+  const visible = $("#authPassword").type === "password";
+  $("#authPassword").type = visible ? "text" : "password";
+  $("#togglePassword").setAttribute("aria-pressed", String(visible));
+  $("#togglePassword").setAttribute("aria-label", visible ? "Ocultar senha" : "Mostrar senha");
+});
 
 function renderSettingsLists() {
   const settings = getSettings();
@@ -893,16 +948,14 @@ $("#settingsBtn").addEventListener("click", () => {
   resetIncomeSettingsForm();
   resetFixedSettingsForm();
   renderSettingsLists();
-  $("#settingsPanel").classList.remove("hidden");
+  openSettingsDialog();
 });
 
-$("#closeSettings").addEventListener("click", () => {
-  $("#settingsPanel").classList.add("hidden");
-});
+$("#closeSettings").addEventListener("click", closeSettingsDialog);
 
 $("#settingsPanel").addEventListener("click", (event) => {
   if (event.target === $("#settingsPanel")) {
-    $("#settingsPanel").classList.add("hidden");
+    closeSettingsDialog();
   }
 });
 
@@ -913,7 +966,7 @@ $("#resetAppBtn").addEventListener("click", () => {
   Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
   state.setupIncomes = [];
   state.setupFixed = [];
-  $("#settingsPanel").classList.add("hidden");
+  closeSettingsDialog();
   showOnboarding();
   toast("Dados apagados.");
 });
@@ -1063,12 +1116,14 @@ function baseChartOptions() {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    animation: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? false : { duration: 350 },
     plugins: {
       legend: {
         labels: {
           color: "#cbd5e1",
           usePointStyle: true,
           boxWidth: 8,
+          padding: 18,
         },
       },
       tooltip: {
@@ -1079,8 +1134,8 @@ function baseChartOptions() {
     },
     scales: {
       x: {
-        ticks: { color: "#94a3b8" },
-        grid: { color: "rgba(148,163,184,.08)" },
+        ticks: { color: "#aab8cc" },
+        grid: { display: false },
       },
       y: {
         ticks: {
@@ -1097,6 +1152,10 @@ function renderReportCharts(dataset) {
   const cat = categoryData(dataset);
   const fixedTotal = dataset.monthly.reduce((s, m) => s + m.fixed, 0);
   const variableTotal = dataset.monthly.reduce((s, m) => s + m.variable, 0);
+  $("#categoryChart").setAttribute("aria-label", `Despesas por categoria: ${cat.map(([name, value]) => `${name}: ${money(value)}`).join("; ") || "sem despesas no período"}.`);
+  $("#fixedVariableChart").setAttribute("aria-label", `Gastos fixos: ${money(fixedTotal)}. Gastos variáveis: ${money(variableTotal)}.`);
+  $("#monthlyChart").setAttribute("aria-label", dataset.monthly.map((month) => `${month.label}: receitas ${money(month.income)}, despesas ${money(month.expense)}`).join("; "));
+  $("#balanceChart").setAttribute("aria-label", dataset.monthly.map((month) => `${month.label}: saldo ${money(month.balance)}`).join("; "));
 
   destroyChart("category");
   reportCharts.category = new Chart($("#categoryChart"), {
@@ -1106,13 +1165,18 @@ function renderReportCharts(dataset) {
       datasets: [{
         label: "Gastos",
         data: cat.map(([, value]) => value),
+        backgroundColor: cat.map((_, index) => ["#9ac7ff", "#b6a6e9", "#8ce0bd", "#f1c78a", "#ffa6ab", "#8ecedb"][index % 6]),
+        borderRadius: 5,
+        maxBarThickness: 36,
       }],
     },
     options: {
       ...baseChartOptions(),
       indexAxis: cat.length >= 6 ? "y" : "x",
       plugins: baseChartOptions().plugins,
-      scales: baseChartOptions().scales,
+      scales: cat.length >= 6
+        ? { x: baseChartOptions().scales.y, y: { ...baseChartOptions().scales.x, grid: { display: false } } }
+        : baseChartOptions().scales,
     },
   });
 
@@ -1123,11 +1187,16 @@ function renderReportCharts(dataset) {
       labels: ["Gastos fixos", "Gastos variáveis"],
       datasets: [{
         data: [fixedTotal, variableTotal],
+        backgroundColor: ["#9ac7ff", "#b6a6e9"],
+        borderWidth: 0,
+        hoverOffset: 5,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      cutout: "74%",
+      animation: baseChartOptions().animation,
       plugins: baseChartOptions().plugins,
     },
   });
@@ -1138,8 +1207,8 @@ function renderReportCharts(dataset) {
     data: {
       labels: dataset.monthly.map((m) => m.label),
       datasets: [
-        { label: "Receitas", data: dataset.monthly.map((m) => m.income) },
-        { label: "Despesas", data: dataset.monthly.map((m) => m.expense) },
+        { label: "Receitas", data: dataset.monthly.map((m) => m.income), backgroundColor: "#8ce0bd", borderRadius: 5, maxBarThickness: 38 },
+        { label: "Despesas", data: dataset.monthly.map((m) => m.expense), backgroundColor: "#ffa6ab", borderRadius: 5, maxBarThickness: 38 },
       ],
     },
     options: baseChartOptions(),
@@ -1156,6 +1225,10 @@ function renderReportCharts(dataset) {
           data: dataset.monthly.map((m) => m.balance),
           tension: .32,
           fill: false,
+          borderColor: "#9ac7ff",
+          backgroundColor: "#9ac7ff",
+          borderWidth: 2,
+          pointRadius: 4,
         },
       ],
     },
@@ -1236,6 +1309,7 @@ function renderTextSummary(dataset) {
 
 
 function renderPaymentReports(month = selectedMonth()) {
+  $("#reportAccountContext").textContent = `Contas fixas de ${monthLabel(month)}`;
   const dataset = getFixedStatusDataset(month);
   const pending = dataset.filter((item) => item.status !== "paid");
   const paid = dataset.filter((item) => item.status === "paid");
@@ -1277,6 +1351,10 @@ function renderPaymentReports(month = selectedMonth()) {
 function renderReports() {
   renderPaymentReports(selectedMonth());
   const dataset = reportDataset();
+  updatePeriodControls();
+  $("#reportPeriodDescription").textContent = dataset.months.length === 1
+    ? capitalize(monthLabel(dataset.months[0]))
+    : `${capitalize(monthLabel(dataset.months[0]))} a ${monthLabel(dataset.months[dataset.months.length - 1])}`;
   const income = dataset.monthly.reduce((s, m) => s + m.income, 0);
   const expense = dataset.monthly.reduce((s, m) => s + m.expense, 0);
   const balance = income - expense;
@@ -1302,6 +1380,8 @@ $("#printReportBtn").addEventListener("click", () => {
 function setMainView(view) {
   const dashboardView = $("#dashboardView");
   const reportsView = $("#reportsView");
+  const previousView = reportsView.classList.contains("hidden") ? "dashboard" : "reports";
+  viewScrollPositions[previousView] = window.scrollY;
 
   if (view === "reports") {
     dashboardView.classList.add("hidden");
@@ -1323,7 +1403,10 @@ function setMainView(view) {
     if (btn.dataset.view === view) btn.setAttribute("aria-current", "page");
     else btn.removeAttribute("aria-current");
   });
+  if (view !== "add") requestAnimationFrame(() => window.scrollTo({ top: previousView === view ? 0 : viewScrollPositions[view] || 0, behavior: "instant" }));
 }
+
+const viewScrollPositions = { dashboard: 0, reports: 0 };
 
 $$(".nav-item").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -1573,7 +1656,9 @@ function updateSyncUI(text, kind = "") {
   const btn = $("#syncBtn");
   if (btn) {
     btn.title = text;
-    btn.textContent = kind === "sync-error" ? "⚠️" : kind === "sync-warn" ? "↻" : "☁️";
+    btn.setAttribute("aria-label", `${text}. Sincronizar agora`);
+    btn.dataset.syncState = kind;
+    $("#headerSyncLabel").textContent = kind === "sync-error" ? "Ver conexão" : kind === "sync-warn" ? "Salvo no aparelho" : "Sincronizado";
   }
 }
 
@@ -1845,7 +1930,7 @@ $("#logoutBtn").addEventListener("click", async () => {
   CLOUD.ready = false;
   CLOUD.pendingSync = false;
   CLOUD.lastSyncedSignature = null;
-  $("#settingsPanel").classList.add("hidden");
+  closeSettingsDialog();
   showAuthScreen("Você saiu da sua conta. Cada usuário mantém seu próprio cache local.");
 });
 
@@ -2009,6 +2094,50 @@ window.addEventListener("load", () => {
 
 
 // ===== V5.3 TRANSACTION MODAL =====
+const dialogBackgroundElements = new Set();
+let settingsDialogOpener;
+let settingsDialogPreviousOverflow;
+
+function setDialogBackgroundInert(inert) {
+  if (inert) {
+    $$(".app-header, #authScreen, #onboarding, #dashboard, .bottom-nav, #iosInstallBanner").forEach((element) => {
+      if (!element.inert) {
+        element.inert = true;
+        dialogBackgroundElements.add(element);
+      }
+    });
+  } else {
+    dialogBackgroundElements.forEach((element) => { element.inert = false; });
+    dialogBackgroundElements.clear();
+  }
+}
+
+function openSettingsDialog() {
+  const panel = $("#settingsPanel");
+  if (!panel.classList.contains("hidden")) return;
+  if (!$("#transactionModal").classList.contains("hidden")) closeTransactionModal();
+  settingsDialogOpener = document.activeElement;
+  settingsDialogPreviousOverflow = document.body.style.overflow;
+  updateMobileVisualViewport();
+  panel.classList.remove("hidden");
+  document.body.classList.add("settings-modal-open");
+  document.body.style.overflow = "hidden";
+  $("#settingsPanel .modal").scrollTop = 0;
+  $("#closeSettings").focus({ preventScroll: true });
+  setDialogBackgroundInert(true);
+}
+
+function closeSettingsDialog() {
+  const panel = $("#settingsPanel");
+  if (panel.classList.contains("hidden")) return;
+  if (panel.contains(document.activeElement)) document.activeElement.blur();
+  panel.classList.add("hidden");
+  document.body.classList.remove("settings-modal-open");
+  document.body.style.overflow = settingsDialogPreviousOverflow;
+  setDialogBackgroundInert(false);
+  settingsDialogOpener?.focus({ preventScroll: true });
+}
+
 let transactionModalFocusTimer;
 let transactionModalOpener;
 let transactionModalPreviousOverflow;
@@ -2016,6 +2145,7 @@ let transactionModalPreviousOverflow;
 function openTransactionModal() {
   const modal = $("#transactionModal");
   if (!modal || !modal.classList.contains("hidden")) return;
+  if (!$("#settingsPanel").classList.contains("hidden")) closeSettingsDialog();
 
   transactionModalOpener = document.activeElement;
   transactionModalPreviousOverflow = document.body.style.overflow;
@@ -2026,6 +2156,7 @@ function openTransactionModal() {
 
   $(".transaction-sheet-body").scrollTop = 0;
   $("#closeTransactionModal")?.focus({ preventScroll: true });
+  setDialogBackgroundInert(true);
   transactionModalFocusTimer = setTimeout(() => {
     // On desktop, focusing is convenient.
     // On mobile it opens the keyboard immediately and can cover the action buttons.
@@ -2045,6 +2176,7 @@ function closeTransactionModal() {
   modal.classList.add("hidden");
   document.body.classList.remove("transaction-modal-open");
   document.body.style.overflow = transactionModalPreviousOverflow;
+  setDialogBackgroundInert(false);
   transactionModalOpener?.focus({ preventScroll: true });
 }
 
@@ -2057,10 +2189,11 @@ $("#transactionModal")?.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  const modal = $("#transactionModal");
-  if (!modal || modal.classList.contains("hidden")) return;
+  const settingsOpen = !$("#settingsPanel").classList.contains("hidden");
+  const modal = settingsOpen ? $("#settingsPanel") : $("#transactionModal");
+  if (modal.classList.contains("hidden")) return;
   if (event.key === "Tab") {
-    const controls = [...modal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled])')]
+    const controls = [...modal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex="0"]')]
       .filter((control) => control.getClientRects().length > 0);
     const first = controls[0];
     const last = controls[controls.length - 1];
@@ -2072,8 +2205,15 @@ document.addEventListener("keydown", (event) => {
       first?.focus();
     }
   }
-  if (event.key === "Escape" && !$("#transactionModal")?.classList.contains("hidden")) {
-    closeTransactionModal();
+  if (event.key === "Escape") {
+    settingsOpen ? closeSettingsDialog() : closeTransactionModal();
+  }
+});
+
+$(".import-label").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    $("#importBackupInput").click();
   }
 });
 

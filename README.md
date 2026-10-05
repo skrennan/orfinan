@@ -1,4 +1,4 @@
-﻿# Minhas Finanças — V6.5.0
+﻿# Minhas Finanças — V6.6.0
 
 Aplicação estática em HTML, CSS e JavaScript, com visual Fluent/Metro, publicada diretamente pelo Netlify.
 
@@ -21,7 +21,30 @@ Abrir em mobile foca o botão de fechar sem abrir o teclado. Fechar remove o foc
 
 Cores, superfícies acrílicas, tipografia e animações foram preservadas. O envio do formulário, persistência local, autenticação e sincronização continuam com a mesma lógica.
 
-## Validação
+## Refinamentos da versão 6.6
+
+- Navegação entre meses por setas, retorno ao mês atual e seletor de referência também nos relatórios.
+- Restauração da posição de rolagem ao alternar Início e Análise.
+- Ícones vetoriais consistentes e estado da sincronização no cabeçalho, sem alterar o mecanismo de sincronização.
+- Contas com vencimento, categoria e progresso de pagamento; contexto explícito do mês das contas nos relatórios.
+- Filtros ativos visíveis e ação para limpar busca e tipo de movimentação.
+- Gráficos com paleta consistente, dimensões responsivas e descrições acessíveis com os valores reais.
+- Correção da ordem das camadas: cabeçalho abaixo dos modais. Ambos os modais bloqueiam o fundo, contêm o foco, fecham por Escape e restauram foco e rolagem.
+- Configurações com cabeçalho fixo e área de exclusão de dados separada dos formulários.
+- Botão para mostrar/ocultar senha, melhor contraste nos botões principais e erro de validação para descrição vazia.
+- Layout verificado com valores grandes e nomes sem espaços em telas de 320px.
+
+### Validação adicional
+
+```powershell
+node tests/mobile-modal.cjs --screenshots --real-charts
+```
+
+O modo `--real-charts` carrega a versão 4.4.7 do Chart.js já utilizada pelo site e mantém uma cópia temporária para próximas execuções. Verifica os quatro gráficos, inclusive o redimensionamento entre desktop e mobile. Autenticação e service worker continuam isolados no teste, sem acesso a contas reais. Capturas são gravadas na pasta temporária do sistema.
+
+Verificações passaram em 320×568, 390×844, 580×700, 768×1024, 844×390, 1280×800 e 1536×960. Também cobrem troca de dezembro para janeiro, limpeza de filtros, senha, configurações, validação de descrição e ausência de erros JavaScript não tratados no navegador. As rotinas centrais de sincronização foram comparadas antes e depois e permaneceram idênticas.
+
+## Validação da versão 6.5
 
 A versão 6.5 refina o visual Fluent/Metro com a camada `refinements.css`: tipografia Segoe, tela de entrada responsiva, resumo financeiro mais claro e foco visível. Adiciona um indicador de comprometimento da renda, resumo das contas pendentes e busca por descrição ou categoria com filtros de receitas e despesas. Os filtros não alteram os dados armazenados.
 
@@ -41,4 +64,5 @@ Verifica abertura e fechamento em 320×568, 390×844, 580×700, 844×390 e 1280�
 A simulação não substitui validação do teclado em aparelhos Android e Safari/iOS. A sincronização real com Supabase não é exercitada pelo teste.
 
 O teste também verifica filtros sem alteração dos dados, navegação para os relatórios, movimento reduzido e navegação por Tab dentro do modal. Capturas opcionais de login e painel são gravadas na pasta temporária do sistema. Chart.js é substituído apenas na verificação de navegação; a renderização real dos gráficos não é exercitada.
+
 
