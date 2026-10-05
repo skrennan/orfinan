@@ -1,0 +1,25 @@
+{
+  "name": "Minhas Finanças",
+  "short_name": "Finanças",
+  "description": "Gestão financeira pessoal com visual Fluent/Metro, sincronização inteligente e experiência responsiva.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07101e",
+  "theme_color": "#0b1220",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Minhas Finanças" />
+  <link rel="apple-touch-icon" href="icons/icon-192.svg" />
+  <meta name="description" content="Controle financeiro pessoal simples, instalável e offline." />
+  <link rel="manifest" href="manifest.json?v=6.5.0" />
+  <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css?v=6.5.0" />
+  <link rel="stylesheet" href="refinements.css?v=6.5.0" />
+  <title>Minhas Finanças</title>
+</head>
+<body>
+  <div class="fluent-wallpaper" aria-hidden="true"></div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="app-brand">
+        <p class="eyebrow">Seu dinheiro, com clareza</p>
+        <h1>Minhas Finanças</h1>
+      </div>
+
+      <div class="header-actions">
+        <button id="installBtn" class="btn btn-secondary hidden" type="button">Instalar app</button>
+        <div id="accountBadge" class="account-badge hidden">
+          <span id="accountEmail"></span>
+        </div>
+        <button id="syncBtn" class="icon-btn hidden" type="button" title="Sincronizar agora" aria-label="Sincronizar agora">☁️</button>
+        <button id="settingsBtn" class="icon-btn hidden" type="button" title="Configurações" aria-label="Configurações">⚙️</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+
+    <!-- AUTH -->
+    <section id="authScreen" class="auth-screen hidden">
+      <div class="auth-introduction">
+        <span class="intro-mark" aria-hidden="true">R$</span>
+        <h2>Mais clareza.<br>Mais controle.</h2>
+        <p>Receitas, despesas e contas do mês. Tudo no mesmo lugar, para você saber o que entra, o que sai e o que fica.</p>
+        <div class="intro-ledger" aria-hidden="true">
+          <div><span>Receitas</span><span class="ledger-line income-line"></span><span>+</span></div>
+          <div><span>Despesas</span><span class="ledger-line expense-line"></span><span>−</span></div>
+          <div><span>Seu equilíbrio</span><span class="ledger-line balance-line"></span><span>=</span></div>
+        </div>
+        <p class="intro-note">No computador ou no celular. Seus dados acompanham você.</p>
+      </div>
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="auth-logo">R$</div>
+          <div>
+            <h2>Seu espaço financeiro</h2>
+            <p class="muted">Entre para acompanhar seu mês.</p>
+          </div>
+        </div>
+
+        <div class="auth-tabs">
+          <button id="loginTab" class="auth-tab active" type="button">Entrar</button>
+          <button id="signupTab" class="auth-tab" type="button">Criar conta</button>
+        </div>
+
+        <form id="authForm" class="auth-form">
+          <label id="authNameWrap" class="hidden">
+            Seu nome
+            <input id="authName" type="text" maxlength="60" placeholder="Como quer ser chamado" />
+          </label>
+
+          <label>
+            E-mail
+            <input id="authEmail" type="email" autocomplete="email" placeholder="voce@email.com" required />
+          </label>
+
+          <label>
+            Senha
+            <input id="authPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Mínimo 6 caracteres" required />
+          </label>
+
+          <button id="authSubmitBtn" class="btn btn-primary auth-main-btn" type="submit">Entrar</button>
+        </form>
+
+        <div class="auth-divider"><span>ou</span></div>
+
+        <button id="googleLoginBtn" class="btn google-btn" type="button">
+          <span class="google-g">G</span>
+          Continuar com Google
+        </button>
+
+        <p id="authMessage" class="auth-message" role="status"></p>
+        <p class="auth-footnote">As alterações ficam salvas no aparelho e são sincronizadas quando há conexão.</p>
+      </div>
+    </section>
+
+    <!-- ONBOARDING -->
+    <section id="onboarding" class="onboarding hidden">
+      <div class="onboarding-card">
+        <div class="stepper">
+          <span class="step active" data-step-dot="1">1</span>
+          <span class="step-line"></span>
+          <span class="step" data-step-dot="2">2</span>
+          <span class="step-line"></span>
+          <span class="step" data-step-dot="3">3</span>
+        </div>
+
+        <section class="onboarding-step" data-step="1">
+          <p class="eyebrow">Passo 1 de 3</p>
+          <h2>Sua receita mensal</h2>
+          <p class="muted">Cadastre pelo menos uma receita que você normalmente recebe todo mês.</p>
+
+          <form id="incomeSetupForm" class="setup-form">
+            <div class="form-grid">
+              <label>
+                Tipo
+                <select id="setupIncomeType" required>
+                  <option value="Salário">Salário</option>
+                  <option value="Pró-labore">Pró-labore</option>
+                  <option value="Aposentadoria">Aposentadoria</option>
+                  <option value="Pensão">Pensão</option>
+                  <option value="Aluguel">Renda de aluguel</option>
+                  <option value="Freelance">Freelance recorrente</option>
+                  <option value="Comissão">Comissão</option>
+                  <option value="Outra">Outra receita</option>
+                </select>
+              </label>
+
+              <label>
+                Descrição
+                <input id="setupIncomeName" type="text" value="Meu salário" maxlength="60" required />
+              </label>
+
+              <label>
+                Valor mensal
+                <input id="setupIncomeAmount" type="number" min="0.01" step="0.01" placeholder="0,00" required />
+              </label>
+
+              <label>
+                Dia de recebimento
+                <input id="setupIncomeDay" type="number" min="1" max="31" value="5" required />
+              </label>
+            </div>
+
+            <div class="inline-actions">
+              <button class="btn btn-primary" type="submit">Adicionar receita</button>
+            </div>
+          </form>
+
+          <div class="setup-list" id="setupIncomeList"></div>
+
+          <div class="wizard-actions">
+            <span></span>
+            <button id="goStep2" class="btn btn-primary" type="button">Continuar</button>
+          </div>
+        </section>
+
+        <section class="onboarding-step hidden" data-step="2">
+          <p class="eyebrow">Passo 2 de 3</p>
+          <h2>Seus gastos fixos</h2>
+          <p class="muted">Cadastre os compromissos mensais que já fazem parte da sua rotina.</p>
+
+          <form id="fixedSetupForm" class="setup-form">
+            <div class="form-grid">
+              <label>
+                Nome
+                <input id="setupFixedName" type="text" placeholder="Ex.: Internet" maxlength="60" required />
+              </label>
+
+              <label>
+                Valor mensal
+                <input id="setupFixedAmount" type="number" min="0.01" step="0.01" placeholder="0,00" required />
+              </label>
+
+              <label>
+                Categoria
+                <select id="setupFixedCategory" required>
+                  <option>Moradia</option>
+                  <option>Energia</option>
+                  <option>Água</option>
+                  <option>Internet</option>
+                  <option>Telefone</option>
+                  <option>Educação</option>
+                  <option>Empréstimo</option>
+                  <option>Assinaturas</option>
+                  <option>Saúde</option>
+                  <option>Transporte</option>
+                  <option>Outros</option>
+                </select>
+              </label>
+
+              <label>
+                Dia do vencimento
+                <input id="setupFixedDay" type="number" min="1" max="31" value="10" required />
+              </label>
+            </div>
+
+            <div class="inline-actions">
+              <button class="btn btn-primary" type="submit">Adicionar gasto fixo</button>
+            </div>
+          </form>
+
+          <div class="setup-list" id="setupFixedList"></div>
+
+          <p class="helper-text">Você precisa cadastrar pelo menos um gasto fixo para concluir a configuração inicial.</p>
+
+          <div class="wizard-actions">
+            <button id="backStep1" class="btn btn-secondary" type="button">Voltar</button>
+            <button id="goStep3" class="btn btn-primary" type="button">Continuar</button>
+          </div>
+        </section>
+
+        <section class="onboarding-step hidden" data-step="3">
+          <p class="eyebrow">Passo 3 de 3</p>
+          <h2>Resumo inicial</h2>
+          <p class="muted">Confira como sua renda mensal começa comprometida antes dos gastos variáveis.</p>
+
+          <div class="review-grid">
+            <article class="metric-card">
+              <span>Receita mensal</span>
+              <strong id="reviewIncome">R$ 0,00</strong>
+            </article>
+
+            <article class="metric-card">
+              <span>Gastos fixos</span>
+              <strong id="reviewFixed">R$ 0,00</strong>
+            </article>
+
+            <article class="metric-card highlight">
+              <span>Disponível inicial</span>
+              <strong id="reviewAvailable">R$ 0,00</strong>
+            </article>
+          </div>
+
+          <div class="commitment-box">
+            <div class="commitment-head">
+              <span>Renda comprometida</span>
+              <strong id="reviewCommitment">0%</strong>
+            </div>
+            <div class="progress"><span id="reviewProgress"></span></div>
+          </div>
+
+          <div class="wizard-actions">
+            <button id="backStep2" class="btn btn-secondary" type="button">Voltar</button>
+            <button id="finishSetup" class="btn btn-primary" type="button">Começar a usar</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="hidden">
+      <div id="dashboardView">
+      <section class="editorial-head">
+        <div class="editorial-greeting">
+          <span class="editorial-label">Visão do mês</span>
+          <h2 id="editorialGreeting">Boa noite.</h2>
+          <p id="editorialDate">Controle claro. Decisões melhores.</p>
+        </div>
+
+        <label class="editorial-month">
+          <span>Período</span>
+          <input id="monthFilter" type="month" />
+        </label>
+      </section>
+
+      <section class="editorial-balance">
+        <div class="editorial-balance-main">
+          <span class="editorial-balance-caption">Saldo após os compromissos</span>
+          <strong id="heroBalanceValue">R$ 0,00</strong>
+          <div class="editorial-status" id="heroDeltaChip">
+            <span class="editorial-status-dot"></span>
+            <span id="heroDeltaText">Sem movimentações ainda</span>
+          </div>
+          <p class="balance-explanation">Considera as receitas, os gastos fixos e as despesas do período.</p>
+        </div>
+
+        <div class="editorial-flow">
+          <div>
+            <span>Receitas do mês</span>
+            <strong id="heroIncomeValue">R$ 0,00</strong>
+          </div>
+          <div>
+            <span>Despesas realizadas</span>
+            <strong id="heroExpenseValue">R$ 0,00</strong>
+          </div>
+          <div>
+            <span>Renda comprometida</span>
+            <strong id="heroCommitmentValue">0%</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary-grid legacy-summary">
+        <article class="summary-card">
+          <span>Receita base</span>
+          <strong id="baseIncomeTotal">R$ 0,00</strong>
+          <small>Receitas recorrentes do mês</small>
+        </article>
+
+        <article class="summary-card">
+          <span>Receitas extras</span>
+          <strong id="extraIncomeTotal">R$ 0,00</strong>
+          <small>Entradas adicionadas no mês</small>
+        </article>
+
+        <article class="summary-card expense">
+          <span>Gastos fixos</span>
+          <strong id="fixedTotal">R$ 0,00</strong>
+          <small>Compromissos mensais</small>
+        </article>
+
+        <article class="summary-card expense">
+          <span>Gastos variáveis</span>
+          <strong id="variableTotal">R$ 0,00</strong>
+          <small>Despesas adicionadas no mês</small>
+        </article>
+
+        <article class="summary-card balance">
+          <span>Saldo disponível</span>
+          <strong id="balanceTotal">R$ 0,00</strong>
+          <small id="balanceHint">Depois de todas as despesas</small>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <article class="panel quick-add-panel">
+          <div class="panel-head">
+            <div>
+              <h3>Seu mês em dia</h3>
+            </div>
+          </div>
+
+          <button id="openTransactionModalInline" class="quick-add-card" type="button">
+            <span class="quick-add-symbol">+</span>
+            <span>
+              <strong>Novo lançamento</strong>
+              <small>Adicionar despesa ou receita extra</small>
+            </span>
+            <span class="quick-add-arrow">↗</span>
+          </button>
+          <div class="month-insight">
+            <div class="insight-heading"><span>Compromissos fixos</span><strong id="budgetCommitment">0%</strong></div>
+            <div class="commitment-meter" role="progressbar" aria-label="Percentual da renda comprometido com gastos fixos" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="budgetMeter"></span></div>
+            <p id="budgetInsight">Cadastre suas receitas e contas para acompanhar o mês.</p>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Próximas contas</h3>
+            </div>
+          </div>
+
+          <div id="fixedStatusList" class="fixed-status-list"></div>
+        </article>
+      </section>
+
+      <section class="panel activity-panel">
+        <div class="panel-head">
+          <div>
+            <h3>Movimentações</h3>
+            <p id="transactionResultCount" class="section-description" aria-live="polite">Seus lançamentos neste período</p>
+          </div>
+        </div>
+
+        <div class="activity-toolbar">
+          <label class="activity-search"><span class="sr-only">Buscar movimentações</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="transactionSearch" type="search" placeholder="Buscar descrição ou categoria" autocomplete="off" /></label>
+          <div class="activity-filters" role="group" aria-label="Filtrar movimentações">
+            <button type="button" data-transaction-filter="all" aria-pressed="true">Todas</button>
+            <button type="button" data-transaction-filter="expense" aria-pressed="false">Despesas</button>
+            <button type="button" data-transaction-filter="income" aria-pressed="false">Receitas</button>
+          </div>
+        </div>
+        <div id="emptyTransactions" class="empty-state">Seu histórico começa com o primeiro lançamento. Use Novo para registrar uma receita ou despesa.</div>
+        <div id="transactionList" class="transaction-list"></div>
+      </section>
+      </div>
+
+      <section id="reportsView" class="hidden">
+        <div class="month-row">
+          <div>
+            <p class="eyebrow">ANÁLISE</p>
+            <h2>Leitura do seu mês</h2>
+          </div>
+
+          <div class="report-filter-row">
+            <label>
+              Período
+              <select id="reportPeriod">
+                <option value="month">Mês selecionado</option>
+                <option value="3months">Últimos 3 meses</option>
+                <option value="6months">Últimos 6 meses</option>
+                <option value="year">Ano atual</option>
+                <option value="all">Todo o histórico</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <section class="report-summary-grid">
+          <article class="summary-card">
+            <span>Receitas</span>
+            <strong id="reportIncome">R$ 0,00</strong>
+            <small>Total no período</small>
+          </article>
+
+          <article class="summary-card expense">
+            <span>Despesas</span>
+            <strong id="reportExpense">R$ 0,00</strong>
+            <small>Total no período</small>
+          </article>
+
+          <article class="summary-card balance">
+            <span>Saldo</span>
+            <strong id="reportBalance">R$ 0,00</strong>
+            <small>Resultado acumulado</small>
+          </article>
+
+          <article class="summary-card">
+            <span>Média mensal</span>
+            <strong id="reportMonthlyAvg">R$ 0,00</strong>
+            <small>Despesas médias</small>
+          </article>
+        </section>
+
+        
+      <section class="status-report-grid">
+        <article class="status-report-card pending">
+          <span>A PAGAR</span>
+          <strong id="reportPendingTotal">R$ 0,00</strong>
+          <small id="reportPendingCount">0 contas pendentes</small>
+        </article>
+        <article class="status-report-card paid">
+          <span>PAGAS</span>
+          <strong id="reportPaidTotal">R$ 0,00</strong>
+          <small id="reportPaidCount">0 contas pagas</small>
+        </article>
+      </section>
+
+      <section class="payment-report-panels">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">PENDENTES</p>
+              <h3>Contas a pagar</h3>
+            </div>
+          </div>
+          <div id="reportPendingList" class="payment-report-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">CONCLUÍDAS</p>
+              <h3>Contas pagas</h3>
+            </div>
+          </div>
+          <div id="reportPaidList" class="payment-report-list"></div>
+        </article>
+      </section>
+
+<section class="reports-grid">
+          <article class="panel chart-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Categorias</p>
+                <h3>Gastos por categoria</h3>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </article>
+
+          <article class="panel chart-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Composição</p>
+                <h3>Fixos x variáveis</h3>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="fixedVariableChart"></canvas>
+            </div>
+          </article>
+
+          <article class="panel chart-panel wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Evolução</p>
+                <h3>Receitas x despesas por mês</h3>
+              </div>
+            </div>
+            <div class="chart-wrap chart-wrap-wide">
+              <canvas id="monthlyChart"></canvas>
+            </div>
+          </article>
+
+          <article class="panel chart-panel wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Saldo</p>
+                <h3>Evolução mensal</h3>
+              </div>
+            </div>
+            <div class="chart-wrap chart-wrap-wide">
+              <canvas id="balanceChart"></canvas>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Ranking</p>
+              <h3>Maiores gastos do período</h3>
+            </div>
+            <button id="printReportBtn" class="btn btn-secondary" type="button">Imprimir relatório</button>
+          </div>
+
+          <div id="topExpensesList" class="ranking-list"></div>
+        </section>
+
+        <section id="printableReport" class="panel printable-report">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Resumo</p>
+              <h3>Relatório financeiro</h3>
+            </div>
+          </div>
+          <div id="reportTextSummary" class="report-text-summary"></div>
+        </section>
+      </section>
+
+      </section>
+
+      <nav class="bottom-nav" aria-label="Navegação principal">
+        <button class="nav-item active" data-view="dashboard" type="button" aria-current="page">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg></span>
+          <small>Início</small>
+        </button>
+        <button class="nav-item nav-item-primary" data-view="add" type="button">
+          <span class="nav-plus">+</span>
+          <small>Novo lançamento</small>
+        </button>
+        <button class="nav-item" data-view="reports" type="button">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7"/></svg></span>
+          <small>Análise</small>
+        </button>
+      </nav>
+
+
+
+    <section id="transactionModal" class="transaction-modal-backdrop hidden">
+      <div class="transaction-sheet" role="dialog" aria-modal="true" aria-labelledby="transactionModalTitle">
+        <div class="transaction-sheet-handle"></div>
+
+        <div class="transaction-sheet-head">
+          <div>
+            <p class="eyebrow">NOVO LANÇAMENTO</p>
+            <h2 id="transactionModalTitle">Registre uma movimentação</h2>
+          </div>
+          <button id="closeTransactionModal" class="icon-btn" type="button" aria-label="Fechar nova movimentação">✕</button>
+        </div>
+
+        <form id="transactionForm" class="transaction-form-shell">
+          <div class="transaction-sheet-body">
+            <div class="type-toggle transaction-type-toggle">
+              <label>
+                <input type="radio" name="transactionType" value="expense" checked />
+                <span>Despesa</span>
+              </label>
+              <label>
+                <input type="radio" name="transactionType" value="income" />
+                <span>Receita extra</span>
+              </label>
+            </div>
+
+            <div class="transaction-amount-focus">
+              <span>Valor</span>
+              <div class="amount-input-wrap">
+                <small>R$</small>
+                <input id="transactionAmount" type="number" min="0.01" step="0.01" placeholder="0,00" required />
+              </div>
+            </div>
+
+            <div class="form-grid transaction-form-grid modal-form-grid">
+              <label>
+                Descrição
+                <input id="transactionDescription" type="text" placeholder="Ex.: Supermercado" maxlength="60" required />
+              </label>
+
+              <label>
+                Categoria
+                <select id="transactionCategory" required></select>
+              </label>
+
+              <label>
+                Data
+                <input id="transactionDate" type="date" required />
+              </label>
+            </div>
+          </div>
+
+          <div class="transaction-sheet-actions">
+            <button id="cancelTransactionModal" class="btn btn-secondary" type="button">Cancelar</button>
+            <button class="btn btn-primary" type="submit">Salvar lançamento</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settingsPanel" class="modal-backdrop hidden">
+      <div class="modal">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Configurações</p>
+            <h2>Receitas e gastos fixos</h2>
+          </div>
+          <button id="closeSettings" class="icon-btn" type="button">✕</button>
+        </div>
+
+        
+        <section class="cloud-settings-card">
+          <div>
+            <p class="eyebrow">Conta e nuvem</p>
+            <h3 id="settingsAccountEmail">Conta</h3>
+            <p id="syncStatusText" class="muted">Verificando sincronização...</p>
+          </div>
+          <div class="cloud-actions">
+            <button id="syncNowBtn" class="btn btn-secondary" type="button">Sincronizar agora</button>
+            <button id="exportBackupBtn" class="btn btn-secondary" type="button">Exportar backup</button>
+            <label class="btn btn-secondary import-label">
+              Importar backup
+              <input id="importBackupInput" type="file" accept=".json,application/json" hidden />
+            </label>
+            <button id="logoutBtn" class="btn btn-danger" type="button">Sair da conta</button>
+          </div>
+        </section>
+
+<div class="settings-columns">
+          <div>
+            <h3>Receitas recorrentes</h3>
+            <form id="settingsIncomeForm" class="settings-add-form">
+              <input id="settingsIncomeEditId" type="hidden" />
+              <label>Tipo
+                <select id="settingsIncomeType" required>
+                  <option value="Salário">Salário</option>
+                  <option value="Pró-labore">Pró-labore</option>
+                  <option value="Aposentadoria">Aposentadoria</option>
+                  <option value="Pensão">Pensão</option>
+                  <option value="Aluguel">Renda de aluguel</option>
+                  <option value="Freelance">Freelance recorrente</option>
+                  <option value="Comissão">Comissão</option>
+                  <option value="Outra">Outra receita</option>
+                </select>
+              </label>
+              <label>Descrição
+                <input id="settingsIncomeName" type="text" placeholder="Ex.: Salário principal" maxlength="60" required />
+              </label>
+              <div class="settings-two-cols">
+                <label>Valor mensal
+                  <input id="settingsIncomeAmount" type="number" min="0.01" step="0.01" placeholder="0,00" required />
+                </label>
+                <label>Dia
+                  <input id="settingsIncomeDay" type="number" min="1" max="31" value="5" required />
+                </label>
+              </div>
+              <div class="settings-form-actions">
+                <button id="cancelIncomeEdit" class="btn btn-secondary hidden" type="button">Cancelar</button>
+                <button id="saveIncomeSetting" class="btn btn-primary" type="submit">+ Adicionar receita</button>
+              </div>
+            </form>
+            <div id="settingsIncomeList" class="setup-list"></div>
+            <button id="resetAppBtn" class="btn btn-danger" type="button">Apagar dados e recomeçar</button>
+          </div>
+
+          <div>
+            <h3>Gastos fixos</h3>
+            <form id="settingsFixedForm" class="settings-add-form">
+              <input id="settingsFixedEditId" type="hidden" />
+              <label>Nome
+                <input id="settingsFixedName" type="text" placeholder="Ex.: Internet" maxlength="60" required />
+              </label>
+              <label>Categoria
+                <select id="settingsFixedCategory" required>
+                  <option>Moradia</option><option>Energia</option><option>Água</option>
+                  <option>Internet</option><option>Telefone</option><option>Educação</option>
+                  <option>Empréstimo</option><option>Assinaturas</option><option>Saúde</option>
+                  <option>Transporte</option><option>Outros</option>
+                </select>
+              </label>
+              <div class="settings-two-cols">
+                <label>Valor mensal
+                  <input id="settingsFixedAmount" type="number" min="0.01" step="0.01" placeholder="0,00" required />
+                </label>
+                <label>Vencimento
+                  <input id="settingsFixedDay" type="number" min="1" max="31" value="10" required />
+                </label>
+              </div>
+              <div class="settings-form-actions">
+                <button id="cancelFixedEdit" class="btn btn-secondary hidden" type="button">Cancelar</button>
+                <button id="saveFixedSetting" class="btn btn-primary" type="submit">+ Adicionar gasto</button>
+              </div>
+            </form>
+            <div id="settingsFixedList" class="setup-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <section id="iosInstallBanner" class="ios-install-banner hidden">
+    <button id="closeIosBanner" class="ios-banner-close" type="button">✕</button>
+    <strong>Instalar no iPhone</strong>
+    <span>No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.</span>
+  </section>
+
+  <template id="miniItemTemplate">
+    <div class="mini-item">
+      <div>
+        <strong class="mini-title"></strong>
+        <small class="mini-meta"></small>
+      </div>
+      <div class="mini-actions">
+        <strong class="mini-value"></strong>
+        <button class="mini-delete" type="button">Excluir</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="transactionTemplate">
+    <article class="transaction-item">
+      <div class="transaction-main">
+        <div class="transaction-icon"></div>
+        <div class="transaction-text">
+          <strong class="transaction-description"></strong>
+          <small class="transaction-meta"></small>
+        </div>
+      </div>
+
+      <div class="transaction-actions">
+        <strong class="transaction-value"></strong>
+        <button class="mini-delete delete-transaction" type="button">Excluir</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="app.js?v=6.5.0"></script>
+</body>
+</html>
