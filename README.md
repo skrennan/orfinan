@@ -83,6 +83,6 @@ O teste também verifica filtros sem alteração dos dados, navegação para os 
 
 ### Visual 6.8
 
-Dire??o inspirada na refer?ncia Unreal Engine: superf?cies em grafite (#101113, #1b1d20, #222429), texto branco suave (#efeeeb), contornos cinza (#34373c) e azul frio pontual (#b3cbe1). Tipografia Bahnschrift com alternativas locais, valores alinhados e destaque concentrado no saldo. Login, painel, relat?rios, navega??o, modais e ?cones do app usam a mesma identidade. Sem fontes remotas ou depend?ncias novas.
+Direção inspirada na referência Unreal Engine: superfícies em grafite (#101113, #1b1d20, #222429), texto branco suave (#efeeeb), contornos cinza (#34373c) e azul frio pontual (#b3cbe1). Tipografia Bahnschrift com alternativas locais, valores alinhados e destaque concentrado no saldo. Login, painel, relatórios, navegação, modais e ícones do app usam a mesma identidade. Sem fontes remotas ou dependências novas.
 
-A mudan?a preserva a navega??o e a l?gica financeira, de autentica??o e sincroniza??o. Cache atualizado para 6.8.0. Verifica??o: testes de seguran?a, testes de navegador com Chart.js/Supabase locais em sete tamanhos de tela e build de publica??o.
+A mudança preserva a navegação e a lógica financeira, de autenticação e sincronização. Cache atualizado para 6.8.0. Verificação: testes de segurança, testes de navegador com Chart.js/Supabase locais em sete tamanhos de tela e build de publicação.
