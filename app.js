@@ -1135,7 +1135,7 @@ function baseChartOptions() {
     plugins: {
       legend: {
         labels: {
-          color: "#cbd5e1",
+          color: "#d1d3d7",
           usePointStyle: true,
           boxWidth: 8,
           padding: 18,
@@ -1149,12 +1149,12 @@ function baseChartOptions() {
     },
     scales: {
       x: {
-        ticks: { color: "#aab8cc" },
+        ticks: { color: "#a4a7ad" },
         grid: { display: false },
       },
       y: {
         ticks: {
-          color: "#94a3b8",
+          color: "#a4a7ad",
           callback: (value) => money(value),
         },
         grid: { color: "rgba(148,163,184,.08)" },
@@ -1180,7 +1180,7 @@ function renderReportCharts(dataset) {
       datasets: [{
         label: "Gastos",
         data: cat.map(([, value]) => value),
-        backgroundColor: cat.map((_, index) => ["#9ac7ff", "#b6a6e9", "#8ce0bd", "#f1c78a", "#ffa6ab", "#8ecedb"][index % 6]),
+        backgroundColor: cat.map((_, index) => ["#8db7df", "#b8b1c6", "#a0c9af", "#dec18f", "#dfa4a0", "#a0bbbf"][index % 6]),
         borderRadius: 5,
         maxBarThickness: 36,
       }],
@@ -1202,7 +1202,7 @@ function renderReportCharts(dataset) {
       labels: ["Gastos fixos", "Gastos variáveis"],
       datasets: [{
         data: [fixedTotal, variableTotal],
-        backgroundColor: ["#9ac7ff", "#b6a6e9"],
+        backgroundColor: ["#8db7df", "#b8b1c6"],
         borderWidth: 0,
         hoverOffset: 5,
       }],
@@ -1222,8 +1222,8 @@ function renderReportCharts(dataset) {
     data: {
       labels: dataset.monthly.map((m) => m.label),
       datasets: [
-        { label: "Receitas", data: dataset.monthly.map((m) => m.income), backgroundColor: "#8ce0bd", borderRadius: 5, maxBarThickness: 38 },
-        { label: "Despesas", data: dataset.monthly.map((m) => m.expense), backgroundColor: "#ffa6ab", borderRadius: 5, maxBarThickness: 38 },
+        { label: "Receitas", data: dataset.monthly.map((m) => m.income), backgroundColor: "#a0c9af", borderRadius: 5, maxBarThickness: 38 },
+        { label: "Despesas", data: dataset.monthly.map((m) => m.expense), backgroundColor: "#dfa4a0", borderRadius: 5, maxBarThickness: 38 },
       ],
     },
     options: baseChartOptions(),
@@ -1240,8 +1240,8 @@ function renderReportCharts(dataset) {
           data: dataset.monthly.map((m) => m.balance),
           tension: .32,
           fill: false,
-          borderColor: "#9ac7ff",
-          backgroundColor: "#9ac7ff",
+          borderColor: "#8db7df",
+          backgroundColor: "#8db7df",
           borderWidth: 2,
           pointRadius: 4,
         },
