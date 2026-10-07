@@ -47,6 +47,7 @@ const KEYS = {
   get localModified() { return `${accountStoragePrefix()}:localModified`; },
   get lastSync() { return `${accountStoragePrefix()}:lastSync`; },
   get syncDirty() { return `${accountStoragePrefix()}:syncDirty`; },
+  get cloudRevision() { return `${accountStoragePrefix()}:cloudRevision`; },
   get lastSignature() { return `${accountStoragePrefix()}:lastSignature`; },
   get profileCheckedAt() { return `${accountStoragePrefix()}:profileCheckedAt`; },
 };
@@ -1499,6 +1500,7 @@ function clearCurrentAccountLocalData() {
   localStorage.removeItem(KEYS.lastSync);
   localStorage.removeItem(KEYS.syncDirty);
   localStorage.removeItem(KEYS.lastSignature);
+  localStorage.removeItem(KEYS.cloudRevision);
   localStorage.removeItem(KEYS.profileCheckedAt);
 }
 
@@ -1698,209 +1700,6 @@ async function ensureProfile(user, context = accountContext()) {
   }
 
   localStorage.setItem(KEYS.profileCheckedAt, String(Date.now()));
-}
-
-async function fetchCloudFinancialData(context = accountContext()) {
-  if (!context.userId) return null;
-  const { data, error } = await supabaseClient
-    .from("financial_data")
-    .select("data, updated_at")
-    .eq("user_id", context.userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
-}
-
-async function uploadLocalToCloud({ silent = false, force = false } = {}) {
-  if (!CLOUD.user) return;
-  if (CLOUD.conflict && !force) {
-    updateSyncUI("Há alterações diferentes nos aparelhos — escolha quais dados manter", "sync-warn");
-    return false;
-  }
-  const context = accountContext();
-  let failed = false;
-  let retryable = true;
-
-  if (!navigator.onLine) {
-    markSyncDirty();
-    updateSyncUI("Offline — alterações salvas neste aparelho", "sync-warn");
-    return;
-  }
-
-  if (CLOUD.syncing) {
-    CLOUD.pendingSync = true;
-    return;
-  }
-
-  const payload = localFinancialPayload();
-  const signature = payloadSignature(payload);
-  const lastSignature = lastKnownSignature();
-
-  // No write request if nothing changed.
-  if (!force && !isSyncDirty() && lastSignature && signature === lastSignature) {
-    const lastSync = localStorage.getItem(KEYS.lastSync);
-    updateSyncUI(
-      lastSync
-        ? `Tudo sincronizado • ${new Date(lastSync).toLocaleString("pt-BR")}`
-        : "Tudo sincronizado",
-      "sync-ok"
-    );
-    return;
-  }
-
-  CLOUD.syncing = true;
-  CLOUD.pendingSync = false;
-  if (!silent) updateSyncUI("Sincronizando...", "sync-warn");
-
-  const now = new Date().toISOString();
-
-  try {
-    const { error } = await supabaseClient
-      .from("financial_data")
-      .upsert({
-        user_id: context.userId,
-        data: payload,
-        updated_at: now,
-      }, { onConflict: "user_id" });
-    if (!isCurrentAccount(context)) return false;
-
-    if (error) throw error;
-
-    CLOUD.lastCloudUpdate = now;
-    localStorage.setItem(KEYS.lastSync, now);
-    markSyncClean(signature);
-    CLOUD.retryCount = 0;
-    updateSyncUI(`Sincronizado em ${new Date(now).toLocaleString("pt-BR")}`, "sync-ok");
-    return true;
-  } catch (error) {
-    if (!isCurrentAccount(context)) return false;
-    failed = true;
-    retryable = ![400, 401, 403].includes(Number(error.status || error.statusCode)) && !["42501", "23514"].includes(error.code);
-    console.error(error);
-    markSyncDirty();
-    updateSyncUI("Falha ao sincronizar — seus dados continuam salvos localmente", "sync-error");
-    if (!silent) toast("Não foi possível sincronizar com a nuvem.");
-    return false;
-  } finally {
-    // A previous account's response must never modify the current account's state.
-    if (!isCurrentAccount(context)) return;
-    CLOUD.syncing = false;
-
-    // If something changed while a request was in flight, one new grouped sync is enough.
-    if (!CLOUD.loggingOut && (CLOUD.pendingSync || payloadSignature(localFinancialPayload()) !== signature)) {
-      CLOUD.pendingSync = false;
-      scheduleCloudSync();
-    } else if (failed && retryable && !CLOUD.loggingOut && navigator.onLine && CLOUD.retryCount < 3) {
-      scheduleCloudSync({ retry: true });
-    } else if (!failed && !CLOUD.loggingOut && hasUnsyncedChanges()) {
-      scheduleCloudSync();
-    }
-  }
-}
-
-function scheduleCloudSync({ retry = false } = {}) {
-  if (!CLOUD.user || CLOUD.loggingOut || CLOUD.conflict) return;
-  const context = accountContext();
-  clearTimeout(CLOUD.syncTimer);
-  markSyncDirty();
-  if (!retry) CLOUD.retryCount = 0;
-  const delay = retry ? [10000, 30000, 60000][CLOUD.retryCount++] : CLOUD.debounceMs;
-  updateSyncUI(retry ? `Salvo no aparelho • nova tentativa em ${delay / 1000}s` : "Alterações salvas • sincronização em instantes", "sync-warn");
-
-  CLOUD.syncTimer = setTimeout(() => {
-    CLOUD.syncTimer = null;
-    if (isCurrentAccount(context)) uploadLocalToCloud({ silent: true });
-  }, delay);
-}
-
-async function reconcileCloudAndLocal(context = accountContext()) {
-  updateSyncUI("Carregando seus dados...", "sync-warn");
-
-  CLOUD.lastSyncedSignature = localStorage.getItem(KEYS.lastSignature);
-
-  let cloudRow = null;
-  try {
-    cloudRow = await fetchCloudFinancialData(context);
-  } catch (error) {
-    if (!isCurrentAccount(context)) return;
-    console.error(error);
-    CLOUD.ready = true;
-    updateSyncUI(
-      currentAccountHasLocalData()
-        ? (isSyncDirty()
-            ? "Sem acesso à nuvem — há alterações pendentes neste aparelho"
-            : "Sem acesso à nuvem — usando os dados locais desta conta")
-        : "Sem acesso à nuvem — esta conta ainda não possui dados locais",
-      "sync-error"
-    );
-    return;
-  }
-  if (!isCurrentAccount(context)) return;
-
-  if (cloudRow) {
-    try {
-      cloudRow.data = FinancialValidation.normalizeFinancialData(cloudRow.data);
-    } catch (error) {
-      CLOUD.ready = false;
-      updateSyncUI("Dados da nuvem inválidos — os dados locais foram preservados", "sync-error");
-      return;
-    }
-    CLOUD.lastCloudUpdate = cloudRow.updated_at;
-
-    const localModified = localStorage.getItem(KEYS.localModified);
-    const cloudModified = cloudRow.data?.local_modified_at || cloudRow.updated_at;
-    const localHasUnsyncedWork = currentAccountHasLocalData() && isSyncDirty();
-    if (localHasUnsyncedWork && !isDateAfter(localModified, cloudModified)) {
-      CLOUD.ready = true;
-      CLOUD.conflict = true;
-      CLOUD.remoteConflict = cloudRow;
-      $("#syncConflict").classList.remove("hidden");
-      updateSyncUI("Há alterações locais e dados mais recentes na nuvem — escolha quais manter", "sync-warn");
-      return;
-    }
-
-    // Preserve offline/local edits instead of silently overwriting them.
-    if (localHasUnsyncedWork && isDateAfter(localModified, cloudModified)) {
-      CLOUD.ready = true;
-      await uploadLocalToCloud({ silent: true });
-      return;
-    }
-
-    try {
-      applyCloudPayload(cloudRow.data || {});
-    } catch (error) {
-      console.error(error);
-      CLOUD.ready = false;
-      updateSyncUI("Dados da nuvem inválidos — os dados locais foram preservados", "sync-error");
-      return;
-    }
-    localStorage.setItem(KEYS.lastSync, cloudRow.updated_at || new Date().toISOString());
-    markSyncClean();
-    CLOUD.ready = true;
-    updateSyncUI("Dados desta conta carregados da nuvem", "sync-ok");
-    return;
-  }
-
-  if (currentAccountHasLocalData() && hasMeaningfulLocalData()) {
-    CLOUD.ready = true;
-    markSyncDirty();
-    await uploadLocalToCloud({ silent: true });
-    return;
-  }
-
-  const migratedLegacy = migrateLegacyDataOnceForUser();
-  if (migratedLegacy && hasMeaningfulLocalData()) {
-    CLOUD.ready = true;
-    markSyncDirty();
-    await uploadLocalToCloud({ silent: true });
-    return;
-  }
-
-  clearCurrentAccountLocalData();
-  CLOUD.ready = true;
-  markSyncClean();
-  updateSyncUI("Nova conta — comece sua configuração financeira", "sync-ok");
 }
 
 async function enterAuthenticatedApp(user) {
@@ -2179,6 +1978,7 @@ $("#useCloudData").addEventListener("click", () => {
   if (!confirm("Usar os dados da nuvem substituirá as alterações ainda não enviadas deste aparelho. Continuar?")) return;
   const row = CLOUD.remoteConflict;
   applyCloudPayload(row.data);
+  localStorage.setItem(KEYS.cloudRevision, row.updated_at);
   localStorage.setItem(KEYS.lastSync, row.updated_at || new Date().toISOString());
   CLOUD.conflict = false;
   CLOUD.remoteConflict = null;

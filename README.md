@@ -1,4 +1,4 @@
-﻿# Minhas Finanças — V6.8.0
+﻿# Minhas Finanças — V6.9.0
 
 Aplicação estática em HTML, CSS e JavaScript, com visual Fluent/Metro. O Netlify executa `node scripts/build.cjs` e publica somente a pasta `dist/` gerada com os arquivos públicos do app.
 
@@ -86,3 +86,14 @@ O teste também verifica filtros sem alteração dos dados, navegação para os 
 Direção inspirada na referência Unreal Engine: superfícies em grafite (#101113, #1b1d20, #222429), texto branco suave (#efeeeb), contornos cinza (#34373c) e azul frio pontual (#b3cbe1). Tipografia Bahnschrift com alternativas locais, valores alinhados e destaque concentrado no saldo. Login, painel, relatórios, navegação, modais e ícones do app usam a mesma identidade. Sem fontes remotas ou dependências novas.
 
 A mudança preserva a navegação e a lógica financeira, de autenticação e sincronização. Cache atualizado para 6.8.0. Verificação: testes de segurança, testes de navegador com Chart.js/Supabase locais em sete tamanhos de tela e build de publicação.
+
+
+## Revisao funcional 6.9
+
+- Sincronizacao extraida para sync.js; revisao do servidor persistida por conta.
+- Atualizacoes condicionadas ao updated_at, sem depender do relogio do aparelho. Conflito preserva o cache local e bloqueia tentativas automaticas.
+- Primeira gravacao usa INSERT; colisao com registro existente exige resolver o conflito. Escolher manter dados locais tambem verifica se a nuvem mudou novamente.
+- CSS: 56 declaracoes sobrepostas removidas de refinements.css sem mudar o visual aprovado.
+- Testes: dois aparelhos concorrentes, conflito repetido, primeira gravacao, conta sem revisao conhecida, offline e edicoes durante envio; suite anterior e sete tamanhos de tela.
+
+Publicacao: executar `node scripts/build.cjs` e publicar dist. Nao requer nova migracao se o hardening ja foi aplicado (trigger orgfinan_updated_at e UNIQUE(user_id)). Validar dois aparelhos reais apos publicar: abrir a mesma conta em ambos, gravar no primeiro e depois no segundo; o segundo deve oferecer resolucao de conflito. Atualizar todos os aparelhos para substituir clientes antigos. Nenhum deploy ou SQL de producao foi executado nesta rodada.

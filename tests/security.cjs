@@ -33,10 +33,25 @@ function harness() {
     setTimeout:(fn,delay)=>{timers.set(++timerId,{fn,delay});return timerId;},clearTimeout:id=>timers.delete(id),requestAnimationFrame(){},confirm:()=>false,
     window:{supabase:{createClient:()=>client},matchMedia:()=>({matches:false}),addEventListener(){},innerHeight:800,location:{origin:'http://localhost'}},IntersectionObserver:class{observe(){}}});
   vm.runInContext(fs.readFileSync(path.join(root,'financial-validation.js'),'utf8'),context);
+  vm.runInContext(fs.readFileSync(path.join(root,'sync.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'app.js'),'utf8').replace(/^initializeV4\(\);$/m,''),context);
+  let fromImpl = client.from;
+  Object.defineProperty(client,'from',{get:()=>table=>{
+    const query=fromImpl(table);
+    if (table !== 'financial_data' || !query.upsert) return query;
+    const mutate=payload=>{
+      const pending=query.upsert(payload);
+      const chain={eq:()=>chain,select:()=>chain,maybeSingle:async()=>{
+        const result=await pending;
+        return {...result,data:result.error?null:{updated_at:'2026-10-05T11:00:00Z'}};
+      }};
+      return chain;
+    };
+    return {...query,update:mutate,insert:mutate};
+  },set:fn=>fromImpl=fn});
   const exec = expression=>vm.runInContext(expression,context);
   exec('renderDashboard=()=>{};renderSettingsLists=()=>{};showDashboard=()=>{};showOnboarding=()=>{};');
-  const seed = user => exec(`CLOUD.user={id:${JSON.stringify(user)},email:'test@example.test'};CLOUD.ready=true;localStorage.setItem(KEYS.settings,${JSON.stringify(JSON.stringify(good.settings))});localStorage.setItem(KEYS.transactions,'[]');localStorage.setItem(KEYS.localModified,'2026-10-05T10:00:00Z');`);
+  const seed = user => exec(`CLOUD.user={id:${JSON.stringify(user)},email:'test@example.test'};CLOUD.ready=true;localStorage.setItem(KEYS.cloudRevision,'2026-10-05T09:00:00Z');localStorage.setItem(KEYS.settings,${JSON.stringify(JSON.stringify(good.settings))});localStorage.setItem(KEYS.transactions,'[]');localStorage.setItem(KEYS.localModified,'2026-10-05T10:00:00Z');`);
   return {exec,seed,storage,nodes,node,client,timers,auth:(event,session)=>authCallback(event,session),fire:async(id)=>{const job=timers.get(id);timers.delete(id);await job.fn();await Promise.resolve();}};
 }
 
@@ -100,6 +115,56 @@ function harness() {
   assert.throws(()=>h.exec("applyCloudPayload({settings:[],transactions:[]})"));
   assert.equal(h.storage.get('orgfinan:A:settings'),old);
   console.log('PASS invalid data rejected before cache mutation');
+
+  // Simulate atomic database updates shared by two active devices.
+  let database={data:structuredClone(good),updated_at:'2026-10-05T09:00:00Z'}, serial=0;
+  const sharedClient = () => ({
+    select:()=>({eq:()=>({maybeSingle:async()=>({data:structuredClone(database),error:null})})}),
+    update:payload=>{
+      let expected;
+      const query={eq:(key,value)=>{if(key==='updated_at')expected=value;return query;},select:()=>query,maybeSingle:async()=>{
+        if (expected!==database.updated_at) return {data:null,error:null};
+        database={data:structuredClone(payload.data),updated_at:`2026-10-05T11:00:0${++serial}Z`};
+        return {data:{updated_at:database.updated_at},error:null};
+      }}; return query;
+    },
+    insert:()=>({select:()=>({maybeSingle:async()=>({data:null,error:{code:'23505'}})})})
+  });
+  const first=harness(),second=harness();first.seed('A');second.seed('A');
+  first.client.from=sharedClient;second.client.from=sharedClient;
+  assert.equal(await first.exec('uploadLocalToCloud({silent:true})'),true);
+  const accepted=JSON.stringify(database);
+  await second.exec('uploadLocalToCloud({silent:true})');
+  assert.equal(second.exec('CLOUD.conflict'),true);
+  assert.equal(JSON.stringify(database),accepted,'Stale device must not overwrite accepted write');
+  assert.equal(second.exec('isSyncDirty()'),true);
+  assert.equal(second.timers.size,0,'Conflict never enters a retry loop');
+  // Another edit arriving after the user saw the conflict must also be protected.
+  await first.exec('uploadLocalToCloud({silent:true,force:true})');
+  const changedAgain=JSON.stringify(database);
+  assert.equal(await second.exec('uploadLocalToCloud({silent:true,force:true})'),false);
+  assert.equal(JSON.stringify(database),changedAgain);
+  assert.equal(await second.exec('uploadLocalToCloud({silent:true,force:true})'),true);
+  assert.equal(second.storage.get('orgfinan:A:cloudRevision'),database.updated_at);
+  const newDevice=harness();newDevice.seed('A');newDevice.storage.delete('orgfinan:A:cloudRevision');newDevice.client.from=sharedClient;
+  await newDevice.exec('uploadLocalToCloud({silent:true})');
+  assert.equal(newDevice.exec('CLOUD.conflict'),true,'Unknown baseline never overwrites existing data');
+  console.log('PASS two-device atomic revision checks, repeated conflict and unknown baseline');
+
+  h=harness();h.seed('A');h.storage.delete('orgfinan:A:cloudRevision');
+  let created=false;
+  h.client.from=()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:null,error:null})})}),insert:payload=>({select:()=>({maybeSingle:async()=>{created=true;return {data:{updated_at:'2026-10-07T10:00:00Z'},error:null};}})})});
+  assert.equal(await h.exec('uploadLocalToCloud({silent:true})'),true);assert.equal(created,true);
+  assert.equal(h.storage.get('orgfinan:A:cloudRevision'),'2026-10-07T10:00:00Z');
+  h=harness();h.seed('A');h.exec('navigator.onLine=false');await h.exec('uploadLocalToCloud({silent:true})');
+  assert.equal(h.exec('isSyncDirty()'),true);assert.equal(h.timers.size,0);
+  h=harness();h.seed('A');h.client.from=()=>({upsert:()=>new Promise(r=>resolve=r)});
+  const inFlight=h.exec('uploadLocalToCloud({silent:true})');
+  h.storage.set('orgfinan:A:transactions',JSON.stringify(good.transactions));
+  resolve({error:null});await inFlight;
+  assert.equal(h.exec('hasUnsyncedChanges()'),true);
+  assert.equal([...h.timers.values()].some(job=>job.delay===3000),true);
+  console.log('PASS first insert, offline preservation and edits during an upload');
 
   const events={},entries=new Map(),deleted=[];
   const cache={addAll:async()=>{},put:async(k,v)=>entries.set(k,v),match:async k=>entries.get(k)};

@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname,'..');
 const output = path.join(root,'dist');
-const assets = ['index.html','app.js','financial-validation.js','style.css','refinements.css','manifest.json','service-worker.js','icons/icon-192.svg','icons/icon-512.svg','vendor/supabase.min.js','vendor/chart.umd.min.js','vendor/supabase-LICENSE.txt','vendor/chart-LICENSE.txt','vendor/versions.json'];
+const assets = ['index.html','app.js','sync.js','financial-validation.js','style.css','refinements.css','manifest.json','service-worker.js','icons/icon-192.svg','icons/icon-512.svg','vendor/supabase.min.js','vendor/chart.umd.min.js','vendor/supabase-LICENSE.txt','vendor/chart-LICENSE.txt','vendor/versions.json'];
 // Only remove individual previously published files; do not recursively delete paths.
 if (fs.existsSync(output)) {
   const walk = (directory) => {

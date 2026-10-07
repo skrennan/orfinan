@@ -1,10 +1,11 @@
-const CACHE = "orgfinan-v6.8.2";
+const CACHE = "orgfinan-v6.9.0";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./refinements.css",
   "./app.js",
+  "./sync.js",
   "./financial-validation.js",
   "./vendor/supabase.min.js",
   "./vendor/chart.umd.min.js",

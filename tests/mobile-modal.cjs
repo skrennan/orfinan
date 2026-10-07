@@ -16,7 +16,7 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Security-Policy',policy);
   if (name === '/test-supabase.js') { res.setHeader('Content-Type','application/javascript'); res.end(stub); return; }
   if (name === '/test-helpers.js') { res.setHeader('Content-Type','application/javascript'); res.end('if(navigator.serviceWorker) navigator.serviceWorker.register=async()=>({});'); return; }
-  if (!['/', '/style.css', '/refinements.css', '/app.js','/financial-validation.js','/vendor/supabase.min.js','/vendor/chart.umd.min.js'].includes(name)) { res.writeHead(404).end(); return; }
+  if (!['/', '/style.css', '/refinements.css', '/app.js','/sync.js','/financial-validation.js','/vendor/supabase.min.js','/vendor/chart.umd.min.js'].includes(name)) { res.writeHead(404).end(); return; }
   let content = fs.readFileSync(path.join(root, name === '/' ? 'index.html' : name.slice(1)), 'utf8');
   if (name === '/') {
     if (!realSupabase) content = content.replace(/<script src="vendor\/supabase.min.js"[^>]*><\/script>/,'<script src="test-supabase.js"></script>');

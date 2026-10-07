@@ -51,7 +51,7 @@ Não enviar chave secret/service_role, senha do banco ou tokens de sessão para 
 
 - O cache offline e a sessão persistida usam o armazenamento do navegador. O cache por conta não é criptografado; logout conserva alterações locais para permitir sincronização posterior da mesma conta. Em aparelho compartilhado, o armazenamento pode ser lido por quem controla o navegador/dispositivo.
 - A CSP permite estilos inline para os controles e gráficos; JavaScript inline e recursos externos são bloqueados. RLS continua obrigatório mesmo com CSP.
-- Os dados financeiros são um documento JSON por usuário. Escritas simultâneas de dois aparelhos já conectados continuam sujeitas a substituição do documento inteiro; o conflito detectado na entrada não é um protocolo completo de merge/controle de versão. Para colaboração simultânea seria necessário controle de concorrência no banco.
+- Na versão 6.9, clientes atualizados fazem UPDATE condicionado ao updated_at exato recebido do servidor. A revisão é guardada por conta; divergências preservam dados locais e pedem resolução explícita. Depende do trigger orgfinan_updated_at instalado pelo hardening e de UNIQUE(user_id). O documento continua sendo JSON por usuário, sem merge automático. Clientes antigos ainda fazem upsert incondicional: todos os aparelhos devem atualizar. Os testes concorrentes usam um banco simulado; falta validar dois dispositivos no Supabase publicado.
 - Esta revisão não constitui pentest de infraestrutura. A confirmação do isolamento real depende dos testes de RLS e da configuração efetiva do Supabase.
 
 ## Referências oficiais
