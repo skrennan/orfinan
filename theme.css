@@ -1,0 +1,61 @@
+﻿/* Both themes share geometry. These tokens also style the canvas charts. */
+:root{--chart-label:#58636a;--chart-grid:#edf0f1;--chart-main:#376cba;--chart-income:#468464;--chart-expense:#b28a59;--chart-2:#527dad;--chart-3:#648c9f;--chart-4:#427b83;--chart-5:#537b9e;--chart-6:#35628e}
+.theme-sun{display:none}.theme-toggle{flex-shrink:0}
+html[data-theme=dark]{color-scheme:dark;--bg:#11171e;--panel:#1a232e;--panel-soft:#202c39;--panel-deep:#263443;--text:#e8edf3;--muted:#b0bdca;--line:#344352;--control:#617387;--accent:#a7c8ff;--blue:#a7c8ff;--blue-strong:#c0d8ff;--positive:#9bd4b0;--green:#9bd4b0;--negative:#ffb2aa;--red:#ffb2aa;--amber:#edc18a;--chart-label:#b0bdca;--chart-grid:#344352;--chart-main:#8ebaff;--chart-income:#9bd4b0;--chart-expense:#e0b482;--chart-2:#acc7eb;--chart-3:#8ebdcd;--chart-4:#87c6c7;--chart-5:#9dbdd9;--chart-6:#7ca4dc}
+html[data-theme=dark] .theme-moon{display:none}html[data-theme=dark] .theme-sun{display:block}
+html[data-theme=dark] :is(.panel,.auth-card,.onboarding-card,.modal,.transaction-sheet,.transaction-sheet-actions,.modal-head,.icon-btn,.btn-secondary,.google-btn,.period-stepper,.editorial-flow>div,.summary-card,.status-report-card,.intro-ledger,.bottom-nav){background:var(--panel);color:var(--text)}
+html[data-theme=dark] label{color:#c2cdda}
+html[data-theme=dark] input:not([type=radio]):not([type=hidden]):not([type=file]),html[data-theme=dark] select{background:#151e28;color:var(--text);border-color:var(--control)}
+html[data-theme=dark] input::placeholder{color:#a0afbf}
+html[data-theme=dark] .btn-primary,html[data-theme=dark] .nav-item-primary{background:#a7c8ff;color:#142c4c}
+html[data-theme=dark] .btn-primary:hover,html[data-theme=dark] .nav-item-primary:hover{background:#c0d8ff;color:#142c4c}
+html[data-theme=dark] .btn-secondary:hover,html[data-theme=dark] .icon-btn:hover{background:var(--panel-deep)}
+html[data-theme=dark] .btn-danger{background:#392528;border-color:#8d5553;color:#ffb2aa}
+html[data-theme=dark] .btn-danger:hover{background:#482c30}
+html[data-theme=dark] .nav-item.active{background:#263c57;color:#c3dbff}
+html[data-theme=dark] .nav-item:not(.nav-item-primary):hover,html[data-theme=dark] .nav-utility:hover{background:var(--panel-deep);color:var(--text)}
+html[data-theme=dark] .nav-footer-dot{background:#7da5da}
+html[data-theme=dark] .editorial-balance-main,html[data-theme=dark] .summary-card.balance{background:#233852;color:#d4e4ff}
+html[data-theme=dark] .editorial-balance-main>strong{color:#e0ebff}
+html[data-theme=dark] :is(.editorial-balance-caption,.editorial-status,.balance-explanation){color:#c3d6ef}
+html[data-theme=dark] .editorial-balance-main .btn{background:#a7c8ff;color:#142c4c}
+html[data-theme=dark] .editorial-flow .income-overview,html[data-theme=dark] .status-report-card.paid{background:#223c32}
+html[data-theme=dark] .editorial-flow .expense-overview,html[data-theme=dark] .status-report-card.pending{background:#3b3027}
+html[data-theme=dark] .editorial-flow .income-overview strong,html[data-theme=dark] .income-overview .metric-direction{color:#b6e0c4}
+html[data-theme=dark] .editorial-flow .expense-overview strong,html[data-theme=dark] .expense-overview .metric-direction{color:#edcba2}
+html[data-theme=dark] .editorial-flow .income-overview span{color:#bed6c8}
+html[data-theme=dark] .editorial-flow .expense-overview span{color:#e0cdb6}
+html[data-theme=dark] .editorial-flow>div:last-child{background:transparent;color:var(--text)}
+html[data-theme=dark] .editorial-flow>div:last-child span{color:var(--muted)}
+html[data-theme=dark] :is(.allocation-legend>div>span,.intro-ledger>div){color:var(--muted)}
+html[data-theme=dark] :is(.allocation-bar,.commitment-meter){background:#2d3b4a}
+html[data-theme=dark] #allocationFixed,html[data-theme=dark] .fixed-dot,html[data-theme=dark] .commitment-meter>span{background:#8ebaff}
+html[data-theme=dark] #allocationVariable,html[data-theme=dark] .variable-dot{background:#e0b482}
+html[data-theme=dark] #allocationFree,html[data-theme=dark] .free-dot{background:#9bd4b0}
+html[data-theme=dark] .status-btn{background:#263c57;color:#c3dbff}
+html[data-theme=dark] .status-btn:hover{background:#334f70}
+html[data-theme=dark] .status-btn.paid{background:#263443;color:#c2cdda}
+html[data-theme=dark] .activity-search input{background:#151e28!important;border-color:var(--control)!important}
+html[data-theme=dark] :is(.activity-filters,.auth-tabs){background:#121c27}
+html[data-theme=dark] .activity-filters button[aria-pressed=true],html[data-theme=dark] .auth-tab.active{background:#2b3e55;color:#d7e7ff}
+html[data-theme=dark] .transaction-icon{background:#273340;color:#bbcadb}
+html[data-theme=dark] .transaction-icon.income{background:#223c32;color:#b6e0c4}
+html[data-theme=dark] .intro-mark{background:#233852;color:#c3dbff}
+html[data-theme=dark] .auth-message.error{background:#392528;color:#ffb2aa}
+html[data-theme=dark] .auth-message.success{background:#223c32;color:#b6e0c4}
+html[data-theme=dark] .type-toggle input[value=expense]:checked+span{background:#59432e;color:#ffe0ba}
+html[data-theme=dark] .type-toggle input[value=income]:checked+span{background:#284c3a;color:#c4efd4}
+html[data-theme=dark] .step{background:#263443;color:var(--muted)}
+html[data-theme=dark] .step.active{background:#a7c8ff;color:#142c4c}
+html[data-theme=dark] .step.done{background:#223c32;color:#b6e0c4}
+html[data-theme=dark] .metric-card.highlight{background:#233852}
+html[data-theme=dark] .sync-conflict{background:#352d23;border-color:#8b7555}
+html[data-theme=dark] .sync-conflict strong{color:#f0d1a5}
+html[data-theme=dark] .sync-conflict p{color:#dfcfb8}
+html[data-theme=dark] .modal-backdrop,html[data-theme=dark] .transaction-modal-backdrop{background:rgba(0,0,0,.65)}
+html[data-theme=dark] .transaction-sheet-handle{background:#617387}
+html[data-theme=dark] .ios-install-banner{background:var(--panel);color:var(--text)}
+html[data-theme=dark] .toast{background:#d0e2ff;color:#152b46}
+html[data-theme=dark] ::selection{background:#a7c8ff;color:#142c4c}
+@media(max-width:800px){html[data-theme=dark] .bottom-nav{border-color:var(--line);box-shadow:0 8px 28px rgba(0,0,0,.28)}html[data-theme=dark] .nav-item-primary{background:#263c57;color:#d0e2ff}}
+@media print{html[data-theme=dark]{--bg:white;--panel:white;--panel-soft:#f4f4f4;--text:#161616;--muted:#444;--line:#ddd;--control:#999;--positive:#286749;--negative:#a53632;color-scheme:light}html[data-theme=dark] :is(.panel,.summary-card,.status-report-card,.summary-card.balance,.status-report-card.paid,.status-report-card.pending){background:white;color:#161616}.theme-toggle{display:none}}

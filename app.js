@@ -1198,6 +1198,10 @@ function destroyChart(key) {
   }
 }
 
+function chartColor(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(`--chart-${name}`).trim();
+}
+
 function baseChartOptions() {
   return {
     responsive: true,
@@ -1206,7 +1210,7 @@ function baseChartOptions() {
     plugins: {
       legend: {
         labels: {
-          color: "#58636a",
+          color: chartColor("label"),
           font: { family: "Manrope", size: 12 },
           usePointStyle: true,
           boxWidth: 8,
@@ -1221,16 +1225,16 @@ function baseChartOptions() {
     },
     scales: {
       x: {
-        ticks: { color: "#58636a", font: { family: "Manrope" } },
+        ticks: { color: chartColor("label"), font: { family: "Manrope" } },
         grid: { display: false },
       },
       y: {
         ticks: {
-          color: "#58636a",
+          color: chartColor("label"),
           font: { family: "Manrope" },
           callback: (value) => money(value),
         },
-        grid: { color: "#edf0f1" },
+        grid: { color: chartColor("grid") },
       },
     },
   };
@@ -1253,7 +1257,7 @@ function renderReportCharts(dataset) {
       datasets: [{
         label: "Gastos",
         data: cat.map(([, value]) => value),
-        backgroundColor: cat.map((_, index) => ["#376cba", "#527dad", "#648c9f", "#427b83", "#537b9e", "#35628e"][index % 6]),
+        backgroundColor: cat.map((_, index) => ["main", "2", "3", "4", "5", "6"].map(chartColor)[index % 6]),
         borderRadius: 5,
         maxBarThickness: 36,
       }],
@@ -1275,7 +1279,7 @@ function renderReportCharts(dataset) {
       labels: ["Gastos fixos", "Gastos variáveis"],
       datasets: [{
         data: [fixedTotal, variableTotal],
-        backgroundColor: ["#376cba", "#b28a59"],
+        backgroundColor: [chartColor("main"), chartColor("expense")],
         borderWidth: 0,
         hoverOffset: 5,
       }],
@@ -1295,8 +1299,8 @@ function renderReportCharts(dataset) {
     data: {
       labels: dataset.monthly.map((m) => m.label),
       datasets: [
-        { label: "Receitas", data: dataset.monthly.map((m) => m.income), backgroundColor: "#468464", borderRadius: 5, maxBarThickness: 38 },
-        { label: "Despesas", data: dataset.monthly.map((m) => m.expense), backgroundColor: "#b28a59", borderRadius: 5, maxBarThickness: 38 },
+        { label: "Receitas", data: dataset.monthly.map((m) => m.income), backgroundColor: chartColor("income"), borderRadius: 5, maxBarThickness: 38 },
+        { label: "Despesas", data: dataset.monthly.map((m) => m.expense), backgroundColor: chartColor("expense"), borderRadius: 5, maxBarThickness: 38 },
       ],
     },
     options: baseChartOptions(),
@@ -1313,8 +1317,8 @@ function renderReportCharts(dataset) {
           data: dataset.monthly.map((m) => m.balance),
           tension: .32,
           fill: false,
-          borderColor: "#376cba",
-          backgroundColor: "#376cba",
+          borderColor: chartColor("main"),
+          backgroundColor: chartColor("main"),
           borderWidth: 2,
           pointRadius: 4,
         },
@@ -1323,6 +1327,10 @@ function renderReportCharts(dataset) {
     options: baseChartOptions(),
   });
 }
+
+window.addEventListener("orgfinan:themechange", () => {
+  if (!$("#reportsView").classList.contains("hidden") && getSettings()) renderReportCharts(reportDataset());
+});
 
 function renderTopExpenses(dataset) {
   const items = [];

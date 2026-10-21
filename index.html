@@ -4,16 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f3f5f7" />
+  <meta name="color-scheme" content="light dark" />
+  <script src="theme.js?v=7.1.0"></script>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Minhas Finanças" />
   <link rel="apple-touch-icon" href="icons/icon-192.svg" />
   <meta name="description" content="Controle financeiro pessoal simples, instalável e offline." />
-  <link rel="manifest" href="manifest.json?v=7.0.1" />
+  <link rel="manifest" href="manifest.json?v=7.1.0" />
   <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml" />
   <link rel="preload" href="fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin />
-  <link rel="stylesheet" href="style.css?v=7.0.1" />
-  <link rel="stylesheet" href="refinements.css?v=7.0.1" />
+  <link rel="stylesheet" href="style.css?v=7.1.0" />
+  <link rel="stylesheet" href="refinements.css?v=7.1.0" />
+  <link rel="stylesheet" href="theme.css?v=7.1.0" />
   <title>Minhas Finanças</title>
 </head>
 <body>
@@ -28,6 +31,8 @@
     <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
     <symbol id="icon-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
     <symbol id="icon-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14m-6-6 6 6 6-6"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20.5 13.1A8.6 8.6 0 0 1 10.9 3.5 8.7 8.7 0 1 0 20.5 13.1Z"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
   </svg>
   <div class="fluent-wallpaper" aria-hidden="true"></div>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -40,6 +45,7 @@
       </div>
 
       <div class="header-actions">
+        <button id="themeToggle" class="icon-btn theme-toggle" type="button" title="Ativar modo escuro" aria-label="Ativar modo escuro" aria-pressed="false"><svg class="ui-icon theme-moon" aria-hidden="true"><use href="#icon-moon"/></svg><svg class="ui-icon theme-sun" aria-hidden="true"><use href="#icon-sun"/></svg></button>
         <button id="installBtn" class="btn btn-secondary hidden" type="button">Instalar app</button>
         <div id="accountBadge" class="account-badge hidden">
           <span id="accountEmail"></span>
@@ -808,9 +814,9 @@
 
   <script src="vendor/supabase.min.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
   <script src="vendor/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"></script>
-  <script src="financial-validation.js?v=7.0.1"></script>
-  <script src="sync.js?v=7.0.1"></script>
-  <script src="app.js?v=7.0.1"></script>
+  <script src="financial-validation.js?v=7.1.0"></script>
+  <script src="sync.js?v=7.1.0"></script>
+  <script src="app.js?v=7.1.0"></script>
 </body>
 </html>
 

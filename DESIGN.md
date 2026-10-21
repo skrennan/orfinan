@@ -121,6 +121,12 @@ A aparência genérica anterior foi rejeitada. A identidade atual vem da hierarq
 
 ## Colors
 
+### Dark theme
+
+`theme.css` extends the same geometry and semantic roles through `html[data-theme="dark"]`. The dark canvas is `#11171e`, panels `#1a232e`, raised surfaces `#202c39`, primary text `#e8edf3`, muted text `#b0bdca`, borders `#344352` and control outlines `#617387`. The primary action uses pale blue `#a7c8ff` with dark ink `#142c4c`. Balance surfaces use `#233852`; income uses `#223c32` with `#b6e0c4`; ordinary spending uses `#3b3027` with `#edcba2`. Errors and overdue bills use `#ffb2aa`. Chart colors are CSS tokens shared with Chart.js, updated immediately on theme changes.
+
+The header sun/moon button switches light/dark on every screen, including entry. Before the first explicit choice the theme follows the OS; a manual choice is stored per browser as `orgfinan-theme`, independent of account data, and synchronized across tabs. `theme.js` runs before the stylesheets to apply stored preference before first paint. Inputs use native `color-scheme`; toggles have explicit next-action labels and pressed state. Light tokens remain the base palette of the generated sidecar; dark overrides are authoritative in `theme.css`.
+
 A paleta combina neutros frios com azul de ação e cores financeiras suaves. Os valores normativos estão no frontmatter.
 
 ### Primary

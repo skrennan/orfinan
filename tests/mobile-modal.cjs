@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, '..');
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'orgfinan-modal-'));
 const realCharts = process.argv.includes('--real-charts');
 const realSupabase = process.argv.includes('--real-supabase');
+const darkMode = process.argv.includes('--dark');
 const stub = `window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}}})};`;
 const policy = fs.readFileSync(path.join(root,'netlify.toml'),'utf8').match(/Content-Security-Policy = "([^"]+)"/)[1];
 const server = http.createServer((req, res) => {
@@ -16,7 +17,7 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Security-Policy',policy);
   if (name === '/test-supabase.js') { res.setHeader('Content-Type','application/javascript'); res.end(stub); return; }
   if (name === '/test-helpers.js') { res.setHeader('Content-Type','application/javascript'); res.end('if(navigator.serviceWorker) navigator.serviceWorker.register=async()=>({});'); return; }
-  if (!['/', '/style.css', '/refinements.css', '/app.js','/sync.js','/financial-validation.js','/fonts/Manrope-Variable.ttf','/vendor/supabase.min.js','/vendor/chart.umd.min.js'].includes(name)) { res.writeHead(404).end(); return; }
+  if (!['/', '/style.css', '/refinements.css','/theme.css','/theme.js', '/app.js','/sync.js','/financial-validation.js','/fonts/Manrope-Variable.ttf','/vendor/supabase.min.js','/vendor/chart.umd.min.js'].includes(name)) { res.writeHead(404).end(); return; }
   if (name.endsWith('.ttf')) { res.setHeader('Content-Type','font/ttf'); res.end(fs.readFileSync(path.join(root,name.slice(1)))); return; }
   let content = fs.readFileSync(path.join(root, name === '/' ? 'index.html' : name.slice(1)), 'utf8');
   if (name === '/') {
@@ -66,6 +67,7 @@ let browser, socket;
     return result.result.value;
   };
   await call('Runtime.enable');
+  await call('Emulation.setEmulatedMedia', {features:[{name:'prefers-color-scheme',value:darkMode?'dark':'light'}]});
   await call('Page.navigate', {url: `http://127.0.0.1:${server.address().port}/`});
   console.log('Browser loaded local project');
   for (let i = 0; i < 50 && !await evaluate('typeof openTransactionModal === "function"'); i++) await new Promise(resolve => setTimeout(resolve, 100));
@@ -78,11 +80,17 @@ let browser, socket;
     await evaluate(`$('#toast').classList.remove('show');`);
     await evaluate(`document.getAnimations().forEach(animation => { if (animation.effect.getComputedTiming().iterations !== Infinity) animation.finish(); });`);
     const shot = await call('Page.captureScreenshot', {format:'png', captureBeyondViewport:false});
-    const destination = path.join(os.tmpdir(), `orgfinan-${name}.png`);
+    const destination = path.join(os.tmpdir(), `orgfinan-${name}${darkMode?'-dark':''}.png`);
     fs.writeFileSync(destination, Buffer.from(shot.data,'base64'));
     console.log(`Screenshot: ${destination}`);
   };
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".bottom-nav")).display'), 'none', 'Navigation hidden before login');
+  assert.equal(await evaluate('document.documentElement.dataset.theme'),darkMode?'dark':'light','First load follows system color scheme');
+  await evaluate(`$('#themeToggle').click();`);
+  assert.equal(await evaluate('document.documentElement.dataset.theme'),darkMode?'light':'dark');
+  assert.equal(await evaluate(`localStorage.getItem('orgfinan-theme')`),darkMode?'light':'dark');
+  assert.equal(await evaluate(`$('#themeToggle').getAttribute('aria-label')`),darkMode?'Ativar modo escuro':'Ativar modo claro');
+  await evaluate(`$('#themeToggle').click();`);
   await evaluate(`$('#authPassword').value='senha-teste'; $('#togglePassword').click();`);
   assert.equal(await evaluate('$("#authPassword").type'),'text');
   await evaluate(`$('#togglePassword').click();`);
@@ -161,6 +169,12 @@ let browser, socket;
   assert.equal(await evaluate(`$('[data-view="reports"]').getAttribute('aria-current')`),'page');
   if (realCharts) {
     assert.equal(await evaluate('Object.values(reportCharts).filter(Boolean).length'),4,'Four real charts render');
+    const beforeTheme = await evaluate('JSON.stringify(reportDataset().monthly)');
+    const chartInk = await evaluate('reportCharts.balance.data.datasets[0].borderColor');
+    await evaluate(`$('#themeToggle').click();`);
+    assert.notEqual(await evaluate('reportCharts.balance.data.datasets[0].borderColor'),chartInk,'Charts update immediately with the theme');
+    assert.equal(await evaluate('JSON.stringify(reportDataset().monthly)'),beforeTheme,'Theme switch never changes financial data');
+    await evaluate(`$('#themeToggle').click();`);
     await evaluate(`$('#reportPeriod').value='3months'; $('#reportPeriod').dispatchEvent(new Event('change'));`);
     await screenshot('reports-desktop',1280,1000);
     await screenshot('reports-mobile',390,844);

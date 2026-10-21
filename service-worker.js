@@ -1,9 +1,11 @@
-const CACHE = "orgfinan-v7.0.1";
+const CACHE = "orgfinan-v7.1.0";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./refinements.css",
+  "./theme.css",
+  "./theme.js",
   "./fonts/Manrope-Variable.ttf",
   "./app.js",
   "./sync.js",

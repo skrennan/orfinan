@@ -136,3 +136,9 @@ Verificações: sintaxe JS, testes de segurança, fonte local sob CSP, alocaçã
 ## Prévia local — versão 7.0.1
 
 Em localhost, 127.0.0.1 e IPv6 loopback, o app não registra service worker e remove somente registros que apontam para seu próprio service-worker.js. Se uma versão anterior ainda controlar a página, o app recarrega após removê-la. O worker também deixa requisições locais seguirem diretamente para o servidor. Isso permite usar Go Live/Live Server sem misturar CSS novo com arquivos de um build PWA antigo; localStorage e dados financeiros não são apagados. Em produção, o funcionamento offline continua ativo. Ao abrir uma aba antiga, use Ctrl+Shift+R para carregar a atualização.
+
+## Modo escuro — versão 7.1
+
+O botão de lua/sol no cabeçalho alterna os temas em todas as telas. Sem escolha salva, o app acompanha a preferência do sistema. A escolha manual permanece neste navegador com a chave orgfinan-theme e sincroniza entre abas; não muda os dados nem as contas do Supabase. theme.js aplica a preferência antes dos estilos para evitar um clarão inicial. theme.css define superfícies, textos, controles, estados e tokens compartilhados com os gráficos. Os dois novos arquivos fazem parte do build público e do cache offline v7.1.0.
+
+Validação: node tests/theme.cjs; node tests/security.cjs; node tests/mobile-modal.cjs --real-charts --real-supabase; node tests/mobile-modal.cjs --screenshots --real-charts --real-supabase --dark. Inclui preferência do sistema, persistência após novo carregamento, sincronização entre abas, armazenamento bloqueado, contraste dos controles selecionados, atualização imediata de gráficos sem mudar os valores financeiros e sete tamanhos de tela em cada tema.
