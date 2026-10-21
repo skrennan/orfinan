@@ -371,7 +371,7 @@ function fillTransactionCategories() {
   categories.forEach(([name, icon]) => {
     const option = document.createElement("option");
     option.value = name;
-    option.textContent = `${icon} ${name}`;
+    option.textContent = name;
     select.appendChild(option);
   });
 }
@@ -595,8 +595,8 @@ function renderTransactions(transactions) {
 
   filtered.forEach((item) => {
     const node = $("#transactionTemplate").content.cloneNode(true);
-    node.querySelector(".transaction-icon").textContent =
-      categoryIcon(item.category, item.type);
+    node.querySelector(".transaction-icon").innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow-${item.type === "income" ? "down" : "up"}"/></svg>`;
+    node.querySelector(".transaction-icon").classList.add(item.type);
     node.querySelector(".transaction-description").textContent = item.description;
 
     const date = new Date(`${item.date}T12:00:00`);
@@ -658,7 +658,7 @@ function updateEditorialGreeting() {
   const greetingEl = $("#editorialGreeting");
   const dateEl = $("#editorialDate");
 
-  if (greetingEl) greetingEl.textContent = greeting;
+  if (greetingEl) greetingEl.textContent = "Seu mês, com clareza.";
   if (dateEl) {
     const now = new Date();
     const formatted = new Intl.DateTimeFormat("pt-BR", {
@@ -666,7 +666,7 @@ function updateEditorialGreeting() {
       day: "2-digit",
       month: "long"
     }).format(now);
-    dateEl.textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    dateEl.textContent = `${greeting} ${formatted.charAt(0).toLowerCase() + formatted.slice(1)}.`;
   }
 }
 
@@ -746,6 +746,15 @@ function getPaidFixedTotalForMonth(month = selectedMonth()) {
 
 function renderHeroSummary({ baseIncome, extraIncome, fixed, variable, balance }) {
   const totalIncome = baseIncome + extraIncome;
+  const free = Math.max(0, balance);
+  const allocationTotal = Math.max(totalIncome, fixed + variable);
+  for (const [id, amount] of [["Fixed", fixed], ["Variable", variable], ["Free", free]]) {
+    $(`#allocation${id}`).style.width = `${allocationTotal > 0 ? amount / allocationTotal * 100 : 0}%`;
+    $(`#allocation${id}Value`).textContent = money(id === "Free" ? balance : amount);
+  }
+  $("#allocationFreeLabel").textContent = balance < 0 ? "Acima da renda" : "Saldo disponível";
+  $("#allocationFreeValue").classList.toggle("negative", balance < 0);
+  $("#allocationChart").setAttribute("aria-label", `Distribuição do mês: ${money(fixed)} em compromissos fixos, ${money(variable)} em despesas variáveis e ${money(balance)} de saldo.`);
 
   // "Saiu" mostra somente o que realmente saiu da conta:
   // despesas variáveis + gastos fixos já marcados como pagos.
@@ -1058,8 +1067,24 @@ window.addEventListener("appinstalled", () => {
 });
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js");
+  window.addEventListener("load", async () => {
+    try {
+      const localPreview = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+      if (localPreview) {
+        // Live Server must render the files being edited, never a previous PWA build.
+        const scriptUrl = new URL("./service-worker.js", window.location.href).href;
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          const workers = [registration.active, registration.waiting, registration.installing];
+          if (workers.some((worker) => worker?.scriptURL === scriptUrl)) await registration.unregister();
+        }
+        if (navigator.serviceWorker.controller?.scriptURL === scriptUrl) window.location.reload();
+        return;
+      }
+      await navigator.serviceWorker.register("./service-worker.js");
+    } catch (error) {
+      console.warn("Não foi possível configurar o cache offline:", error);
+    }
   });
 }
 
@@ -1181,7 +1206,8 @@ function baseChartOptions() {
     plugins: {
       legend: {
         labels: {
-          color: "#d1d3d7",
+          color: "#58636a",
+          font: { family: "Manrope", size: 12 },
           usePointStyle: true,
           boxWidth: 8,
           padding: 18,
@@ -1195,15 +1221,16 @@ function baseChartOptions() {
     },
     scales: {
       x: {
-        ticks: { color: "#a4a7ad" },
+        ticks: { color: "#58636a", font: { family: "Manrope" } },
         grid: { display: false },
       },
       y: {
         ticks: {
-          color: "#a4a7ad",
+          color: "#58636a",
+          font: { family: "Manrope" },
           callback: (value) => money(value),
         },
-        grid: { color: "rgba(148,163,184,.08)" },
+        grid: { color: "#edf0f1" },
       },
     },
   };
@@ -1226,7 +1253,7 @@ function renderReportCharts(dataset) {
       datasets: [{
         label: "Gastos",
         data: cat.map(([, value]) => value),
-        backgroundColor: cat.map((_, index) => ["#8db7df", "#b8b1c6", "#a0c9af", "#dec18f", "#dfa4a0", "#a0bbbf"][index % 6]),
+        backgroundColor: cat.map((_, index) => ["#376cba", "#527dad", "#648c9f", "#427b83", "#537b9e", "#35628e"][index % 6]),
         borderRadius: 5,
         maxBarThickness: 36,
       }],
@@ -1248,7 +1275,7 @@ function renderReportCharts(dataset) {
       labels: ["Gastos fixos", "Gastos variáveis"],
       datasets: [{
         data: [fixedTotal, variableTotal],
-        backgroundColor: ["#8db7df", "#b8b1c6"],
+        backgroundColor: ["#376cba", "#b28a59"],
         borderWidth: 0,
         hoverOffset: 5,
       }],
@@ -1268,8 +1295,8 @@ function renderReportCharts(dataset) {
     data: {
       labels: dataset.monthly.map((m) => m.label),
       datasets: [
-        { label: "Receitas", data: dataset.monthly.map((m) => m.income), backgroundColor: "#a0c9af", borderRadius: 5, maxBarThickness: 38 },
-        { label: "Despesas", data: dataset.monthly.map((m) => m.expense), backgroundColor: "#dfa4a0", borderRadius: 5, maxBarThickness: 38 },
+        { label: "Receitas", data: dataset.monthly.map((m) => m.income), backgroundColor: "#468464", borderRadius: 5, maxBarThickness: 38 },
+        { label: "Despesas", data: dataset.monthly.map((m) => m.expense), backgroundColor: "#b28a59", borderRadius: 5, maxBarThickness: 38 },
       ],
     },
     options: baseChartOptions(),
@@ -1286,8 +1313,8 @@ function renderReportCharts(dataset) {
           data: dataset.monthly.map((m) => m.balance),
           tension: .32,
           fill: false,
-          borderColor: "#8db7df",
-          backgroundColor: "#8db7df",
+          borderColor: "#376cba",
+          backgroundColor: "#376cba",
           borderWidth: 2,
           pointRadius: 4,
         },
@@ -2318,6 +2345,8 @@ function closeTransactionModal() {
 $("#closeTransactionModal")?.addEventListener("click", closeTransactionModal);
 $("#cancelTransactionModal")?.addEventListener("click", closeTransactionModal);
 $("#openTransactionModalInline")?.addEventListener("click", openTransactionModal);
+$("#overviewAddBtn")?.addEventListener("click", openTransactionModal);
+$("#navSettingsBtn")?.addEventListener("click", openSettingsDialog);
 
 $("#transactionModal")?.addEventListener("click", (event) => {
   if (event.target === $("#transactionModal")) closeTransactionModal();

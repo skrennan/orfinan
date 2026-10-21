@@ -16,7 +16,8 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Security-Policy',policy);
   if (name === '/test-supabase.js') { res.setHeader('Content-Type','application/javascript'); res.end(stub); return; }
   if (name === '/test-helpers.js') { res.setHeader('Content-Type','application/javascript'); res.end('if(navigator.serviceWorker) navigator.serviceWorker.register=async()=>({});'); return; }
-  if (!['/', '/style.css', '/refinements.css', '/app.js','/sync.js','/financial-validation.js','/vendor/supabase.min.js','/vendor/chart.umd.min.js'].includes(name)) { res.writeHead(404).end(); return; }
+  if (!['/', '/style.css', '/refinements.css', '/app.js','/sync.js','/financial-validation.js','/fonts/Manrope-Variable.ttf','/vendor/supabase.min.js','/vendor/chart.umd.min.js'].includes(name)) { res.writeHead(404).end(); return; }
+  if (name.endsWith('.ttf')) { res.setHeader('Content-Type','font/ttf'); res.end(fs.readFileSync(path.join(root,name.slice(1)))); return; }
   let content = fs.readFileSync(path.join(root, name === '/' ? 'index.html' : name.slice(1)), 'utf8');
   if (name === '/') {
     if (!realSupabase) content = content.replace(/<script src="vendor\/supabase.min.js"[^>]*><\/script>/,'<script src="test-supabase.js"></script>');
@@ -74,6 +75,7 @@ let browser, socket;
     if (!process.argv.includes('--screenshots')) return;
     await call('Emulation.setDeviceMetricsOverride', {width,height,deviceScaleFactor:1,mobile:width<=580});
     await evaluate('new Promise(resolve=>setTimeout(resolve,500))');
+    await evaluate(`$('#toast').classList.remove('show');`);
     await evaluate(`document.getAnimations().forEach(animation => { if (animation.effect.getComputedTiming().iterations !== Infinity) animation.finish(); });`);
     const shot = await call('Page.captureScreenshot', {format:'png', captureBeyondViewport:false});
     const destination = path.join(os.tmpdir(), `orgfinan-${name}.png`);
@@ -93,10 +95,24 @@ let browser, socket;
   await screenshot('recovery-mobile',390,844);
   await evaluate(`$('#recoveryBackBtn').click();`);
   assert.equal(await evaluate('$("#authForm").classList.contains("hidden")'),false);
-  await evaluate(`localStorage.setItem(KEYS.settings, JSON.stringify({completed:true,incomes:[{id:'i',name:'Teste',type:'Salário',amount:3000,day:5}],fixedExpenses:[{id:'f',name:'Teste',category:'Casa',amount:100,day:10}]})); showDashboard();`);
+  await evaluate(`localStorage.setItem(KEYS.settings, JSON.stringify({completed:true,incomes:[{id:'i',name:'Salário principal',type:'Salário',amount:3000,day:5}],fixedExpenses:[{id:'f',name:'Internet residencial',category:'Casa',amount:100,day:10}]})); showDashboard();`);
   await evaluate(`localStorage.setItem(KEYS.transactions,JSON.stringify([{id:'a',type:'expense',description:'Café da manhã',amount:18.5,category:'Alimentação',date:localToday(),createdAt:1},{id:'b',type:'income',description:'Projeto freelance',amount:450,category:'Freelance',date:localToday(),createdAt:2},{id:'c',type:'expense',description:'Compras da semana',amount:186.7,category:'Alimentação',date:localToday(),createdAt:3}])); renderDashboard();`);
   await screenshot('dashboard-desktop',1280,1000);
+  await call('Emulation.setDeviceMetricsOverride', {width:1280,height:1000,deviceScaleFactor:1,mobile:false});
+  await evaluate(`$('#navSettingsBtn').focus(); $('#navSettingsBtn').click();`);
+  assert.equal(await evaluate('$("#settingsPanel").classList.contains("hidden")'),false,'Sidebar settings opens the protected dialog');
+  await evaluate(`$('#closeSettings').click();`);
+  assert.equal(await evaluate('document.activeElement.id'),'navSettingsBtn','Sidebar settings restores focus');
   await screenshot('dashboard-mobile',390,844);
+  await screenshot('dashboard-tablet',768,1024);
+  assert.equal(await evaluate('document.fonts.check("500 16px Manrope")'),true,'Local Manrope font loads under production CSP');
+  assert.ok(await evaluate(`Math.abs(['Fixed','Variable','Free'].reduce((sum,key)=>sum+parseFloat($('#allocation'+key).style.width),0)-100)<0.001`),'Allocation segments cover exactly the planned income');
+  await evaluate('renderHeroSummary({baseIncome:100,extraIncome:0,fixed:80,variable:40,balance:-20})');
+  assert.equal(await evaluate('$("#allocationFreeLabel").textContent'),'Acima da renda');
+  assert.equal(await evaluate('$("#allocationFree").style.width'),'0%','Deficit is never drawn as negative available income');
+  await evaluate('renderHeroSummary({baseIncome:0,extraIncome:0,fixed:0,variable:0,balance:0})');
+  assert.equal(await evaluate('$("#allocationFixed").style.width'),'0%','Empty plan never invents chart data');
+  await evaluate('renderDashboard()');
   await evaluate(`$('#fixedStatusList [data-payment-status="pending"]').click();`);
   assert.equal(await evaluate('getFixedPaymentStatus(selectedMonth(),"f").status'),'paid');
   assert.equal(await evaluate('$("#billsAttention").dataset.tone'),'paid');
@@ -181,7 +197,7 @@ let browser, socket;
     await call('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor:1, mobile:width <= 580});
     assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), `${width}: page has no horizontal overflow`);
     assert.equal(await evaluate('getComputedStyle($("#transactionModal")).display'), 'none', `${width}: modal initially hidden`);
-    await evaluate('$("#openTransactionModalInline").focus(); openTransactionModal();');
+    await evaluate('$("#overviewAddBtn").focus(); openTransactionModal();');
     await evaluate('new Promise(resolve=>setTimeout(resolve,450));');
     await evaluate(`document.getAnimations().forEach(animation => { if (animation.effect.getComputedTiming().iterations !== Infinity) animation.finish(); });`);
     assert.equal(await evaluate('$("#transactionModal").classList.contains("hidden")'), false);
@@ -205,10 +221,12 @@ let browser, socket;
       assert.ok(await evaluate(`$('#transactionDate').getBoundingClientRect().bottom <= $('.transaction-sheet-actions').getBoundingClientRect().top`), 'Date reachable above footer');
       await evaluate('delete window.visualViewport; updateMobileVisualViewport();');
     }
+    if (width === 390) await screenshot('transaction-mobile',390,844);
+    if (width === 1280) await screenshot('transaction-desktop',1280,800);
     await evaluate('closeTransactionModal();');
     assert.equal(await evaluate('getComputedStyle($("#transactionModal")).display'), 'none', `${width}: modal stays hidden after closing`);
     assert.equal(await evaluate('document.body.style.overflow'), '');
-    assert.equal(await evaluate('document.activeElement.id'), 'openTransactionModalInline');
+    assert.equal(await evaluate('document.activeElement.id'), 'overviewAddBtn');
     assert.equal(await evaluate('$("#dashboard").inert'),false);
     console.log(`PASS ${width}x${height}: open, viewport, scroll, close`);
   }

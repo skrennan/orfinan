@@ -1,6 +1,6 @@
-# Minhas Finanças — V6.10.0
+# Minhas Finanças — V7.0.0
 
-Aplicação estática em HTML, CSS e JavaScript, com visual Fluent/Metro. O Netlify executa `node scripts/build.cjs` e publica somente a pasta `dist/` gerada com os arquivos públicos do app.
+Aplicação estática em HTML, CSS e JavaScript, com uma interface clara para organização financeira individual. O Netlify executa `node scripts/build.cjs` e publica somente a pasta `dist/` gerada com os arquivos públicos do app.
 
 ## Segurança — versão 6.7
 
@@ -17,7 +17,7 @@ O código foi validado localmente. A configuração efetiva do banco ainda reque
 ## Análise do projeto
 
 - `index.html`: autenticação, configuração inicial, painel, relatórios e modais.
-- `style.css`: tema escuro, superfícies acrílicas, animações e responsividade. Várias camadas de versões anteriores tornam a ordem e a especificidade das regras relevantes para o layout.
+- `style.css`: tokens, componentes e composição da interface clara. `refinements.css`: adaptações para desktop, tablet e celular, teclado virtual e acessibilidade. A versão 7 substitui as antigas camadas Fluent.
 - `app.js`: receitas, despesas, contas pagas, relatórios Chart.js, backups, instalação PWA e autenticação Supabase. O localStorage separa os dados por conta; a sincronização agrupa alterações por 3 segundos, evita envios repetidos por assinaturas e reconcilia dados locais e remotos na entrada. Essas rotinas não foram alteradas.
 - `service-worker.js`, `manifest.json` e `icons/`: instalação e cache offline. A versão do cache foi atualizada; a estratégia de cache permanece igual.
 - `supabase_setup_v4.sql`: dados financeiros e políticas por usuário. Pressupõe que a tabela `profiles` já exista.
@@ -124,3 +124,15 @@ Após publicar, solicite o link para uma conta existente, confira inbox/spam, al
 - Recuperação e cadastro com títulos específicos, feedback legível e controles de toque maiores.
 
 Validação: node tests/security.cjs e node tests/mobile-modal.cjs --screenshots --real-charts --real-supabase. O teste visual usa dados simulados e verifica pagamento/desfazer, mês histórico, recuperação, filtros, teclado e sete tamanhos de tela. A inicialização do Edge tolera bloqueio temporário do arquivo DevToolsActivePort. Não há migração de banco nesta versão. O envio real de e-mail depende de teste em produção.
+
+## Design — versão 7.0
+
+A interface foi reconstruída com a direção pastel-consumer do Taste: fundo claro, superfícies planas, Manrope variável local e cores financeiras discretas. O desktop usa navegação lateral; tablet e celular usam navegação inferior. O painel reúne resumo mensal, distribuição da renda, contas por vencimento e histórico. O novo gráfico de alocação deriva dos valores reais de compromissos fixos, despesas variáveis e saldo; déficits são identificados sem segmentos negativos.
+
+Entrada, recuperação, configuração inicial, relatórios, configurações e lançamento compartilham os componentes do novo sistema. DESIGN.md e .impeccable/design.json documentam os tokens implementados. A fonte e sua licença ficam em fonts/ e entram no build público; a fonte também está disponível offline. Manifesto e ícones usam a nova identidade. O cache PWA foi atualizado para v7.0.0.
+
+Verificações: sintaxe JS, testes de segurança, fonte local sob CSP, alocação em saldo positivo/negativo/zero, navegação lateral e restauração de foco, gráficos Chart.js, pagamento/desfazer e testes de interface em sete tamanhos. Os dados das capturas são de demonstração; os testes não acessam contas reais nem comprovam a entrega SMTP. O Supabase atual e a sincronização por conta foram preservados; esta versão não exige migração de banco.
+
+## Prévia local — versão 7.0.1
+
+Em localhost, 127.0.0.1 e IPv6 loopback, o app não registra service worker e remove somente registros que apontam para seu próprio service-worker.js. Se uma versão anterior ainda controlar a página, o app recarrega após removê-la. O worker também deixa requisições locais seguirem diretamente para o servidor. Isso permite usar Go Live/Live Server sem misturar CSS novo com arquivos de um build PWA antigo; localStorage e dados financeiros não são apagados. Em produção, o funcionamento offline continua ativo. Ao abrir uma aba antiga, use Ctrl+Shift+R para carregar a atualização.

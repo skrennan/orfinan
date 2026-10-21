@@ -1,9 +1,10 @@
-const CACHE = "orgfinan-v6.10.0";
+const CACHE = "orgfinan-v7.0.1";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./refinements.css",
+  "./fonts/Manrope-Variable.ttf",
   "./app.js",
   "./sync.js",
   "./financial-validation.js",
@@ -31,6 +32,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
+  // Local preview servers must always serve current source files.
+  if (["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) return;
   // Never intercept Supabase, other origins, authorization-bearing requests or API routes.
   if (url.origin !== self.location.origin || event.request.headers.has("authorization") || url.searchParams.has("access_token")) return;
   const allowed = new Set(ASSETS.map((asset) => new URL(asset, self.registration.scope).pathname));

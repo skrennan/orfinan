@@ -1,12 +1,12 @@
 {
   "name": "Minhas Finanças",
   "short_name": "Finanças",
-  "description": "Gestão financeira pessoal com visual Fluent/Metro, sincronização inteligente e experiência responsiva.",
+  "description": "Seu espaço para organizar receitas, despesas e contas do mês, no computador ou no celular.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#101722",
-  "theme_color": "#101722",
+  "background_color": "#f3f5f7",
+  "theme_color": "#f3f5f7",
   "lang": "pt-BR",
   "icons": [
     {

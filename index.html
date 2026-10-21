@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#101722" />
+  <meta name="theme-color" content="#f3f5f7" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Minhas Finanças" />
   <link rel="apple-touch-icon" href="icons/icon-192.svg" />
   <meta name="description" content="Controle financeiro pessoal simples, instalável e offline." />
-  <link rel="manifest" href="manifest.json?v=6.10.0" />
+  <link rel="manifest" href="manifest.json?v=7.0.1" />
   <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css?v=6.10.0" />
-  <link rel="stylesheet" href="refinements.css?v=6.10.0" />
+  <link rel="preload" href="fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin />
+  <link rel="stylesheet" href="style.css?v=7.0.1" />
+  <link rel="stylesheet" href="refinements.css?v=7.0.1" />
   <title>Minhas Finanças</title>
 </head>
 <body>
@@ -22,6 +23,11 @@
     <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="icon-left" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
     <symbol id="icon-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+    <symbol id="icon-mark" viewBox="0 0 32 32"><path d="M5 24V13l7 6V8l8 9V5l7 8v11"/><path d="M5 27h22"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+    <symbol id="icon-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14m-6-6 6 6 6-6"/></symbol>
   </svg>
   <div class="fluent-wallpaper" aria-hidden="true"></div>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -29,7 +35,7 @@
   <header class="app-header">
     <div class="app-header-inner">
       <div class="app-brand">
-        <p class="eyebrow">Seu espaço financeiro</p>
+        <svg class="brand-mark" aria-hidden="true"><use href="#icon-mark"/></svg>
         <h1>Minhas Finanças</h1>
       </div>
 
@@ -49,8 +55,8 @@
     <!-- AUTH -->
     <section id="authScreen" class="auth-screen hidden">
       <div class="auth-introduction">
-        <span class="intro-mark" aria-hidden="true">R$</span>
-        <h2>Seu dinheiro.<br> Seu próximo passo.</h2>
+        <span class="intro-mark" aria-hidden="true"><svg class="brand-mark"><use href="#icon-mark"/></svg></span>
+        <h2>Dinheiro em ordem.<br> Mais espaço pra vida.</h2>
         <p>Receitas, despesas e contas do mês. Tudo no mesmo lugar, para você saber o que entra, o que sai e o que fica.</p>
         <div class="intro-ledger" aria-hidden="true">
           <div><span>Receitas</span><span class="ledger-line income-line"></span><span>+</span></div>
@@ -275,7 +281,7 @@
       <section class="editorial-head">
         <div class="editorial-greeting">
           <span class="editorial-label">Visão do mês</span>
-          <h2 id="editorialGreeting">Boa noite.</h2>
+          <h2 id="editorialGreeting">Seu mês, com clareza.</h2>
           <p id="editorialDate">Controle claro. Decisões melhores.</p>
         </div>
 
@@ -289,7 +295,7 @@
         </div>
       </section>
 
-      <section class="editorial-balance">
+      <section class="editorial-balance" aria-label="Resumo financeiro do mês">
         <div class="editorial-balance-main">
           <span class="editorial-balance-caption">Saldo após os compromissos</span>
           <strong id="heroBalanceValue">R$ 0,00</strong>
@@ -298,14 +304,17 @@
             <span id="heroDeltaText">Sem movimentações ainda</span>
           </div>
           <p class="balance-explanation">Considera as receitas, os gastos fixos e as despesas do período.</p>
+          <button id="overviewAddBtn" class="btn btn-primary" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-plus"/></svg>Novo lançamento</button>
         </div>
 
         <div class="editorial-flow">
-          <div>
+          <div class="income-overview">
+            <svg class="ui-icon metric-direction" aria-hidden="true"><use href="#icon-arrow-down"/></svg>
             <span>Receitas do mês</span>
             <strong id="heroIncomeValue">R$ 0,00</strong>
           </div>
-          <div>
+          <div class="expense-overview">
+            <svg class="ui-icon metric-direction" aria-hidden="true"><use href="#icon-arrow-up"/></svg>
             <span>Despesas realizadas</span>
             <strong id="heroExpenseValue">R$ 0,00</strong>
           </div>
@@ -348,14 +357,22 @@
         </article>
       </section>
 
+      <div class="workspace-grid">
       <section class="main-grid">
         <article class="panel quick-add-panel">
           <div class="panel-head">
             <div>
-              <h3>Seu mês em dia</h3>
+              <h3>Cada real, um destino</h3>
+              <p class="section-description">Como sua renda se divide neste mês</p>
             </div>
           </div>
 
+          <div class="allocation-bar" role="img" aria-label="Distribuição da renda do mês" id="allocationChart"><span id="allocationFixed"></span><span id="allocationVariable"></span><span id="allocationFree"></span></div>
+          <div class="allocation-legend">
+            <div><span><i class="allocation-dot fixed-dot"></i>Compromissos fixos</span><strong id="allocationFixedValue">R$ 0,00</strong></div>
+            <div><span><i class="allocation-dot variable-dot"></i>Despesas variáveis</span><strong id="allocationVariableValue">R$ 0,00</strong></div>
+            <div><span><i class="allocation-dot free-dot"></i><span id="allocationFreeLabel">Saldo disponível</span></span><strong id="allocationFreeValue">R$ 0,00</strong></div>
+          </div>
           <button id="openTransactionModalInline" class="quick-add-card" type="button">
             <span class="quick-add-symbol">+</span>
             <span>
@@ -405,6 +422,7 @@
         <button id="emptyTransactionAction" class="btn btn-secondary hidden" type="button">Adicionar lançamento neste mês</button>
         <div id="transactionList" class="transaction-list"></div>
       </section>
+      </div>
       </div>
 
       <section id="reportsView" class="hidden">
@@ -464,12 +482,12 @@
       <p id="reportAccountContext" class="report-account-context"></p>
       <section class="status-report-grid">
         <article class="status-report-card pending">
-          <span>A PAGAR</span>
+          <span>A pagar</span>
           <strong id="reportPendingTotal">R$ 0,00</strong>
           <small id="reportPendingCount">0 contas pendentes</small>
         </article>
         <article class="status-report-card paid">
-          <span>PAGAS</span>
+          <span>Pagas</span>
           <strong id="reportPaidTotal">R$ 0,00</strong>
           <small id="reportPaidCount">0 contas pagas</small>
         </article>
@@ -573,18 +591,22 @@
       </section>
 
       <nav class="bottom-nav" aria-label="Navegação principal">
+        <div class="nav-brand"><svg class="brand-mark" aria-hidden="true"><use href="#icon-mark"/></svg><span>Minhas<br>Finanças<span class="nav-brand-dot">.</span></span></div>
+        <span class="nav-section-label">Seu espaço</span>
         <button class="nav-item active" data-view="dashboard" type="button" aria-current="page">
           <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg></span>
-          <small>Início</small>
+          <small>Visão geral</small>
         </button>
         <button class="nav-item nav-item-primary" data-view="add" type="button">
-          <span class="nav-plus">+</span>
+          <span class="nav-plus"><svg class="ui-icon" aria-hidden="true"><use href="#icon-plus"/></svg></span>
           <small>Novo lançamento</small>
         </button>
         <button class="nav-item" data-view="reports" type="button">
           <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7"/></svg></span>
-          <small>Análise</small>
+          <small>Relatórios</small>
         </button>
+        <button id="navSettingsBtn" class="nav-utility" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg>Configurações</button>
+        <div class="nav-footer"><span class="nav-footer-dot"></span><p>Um lugar para cuidar<br>do seu dinheiro.</p></div>
       </nav>
 
 
@@ -598,7 +620,7 @@
             <p class="eyebrow">NOVO LANÇAMENTO</p>
             <h2 id="transactionModalTitle">Registre uma movimentação</h2>
           </div>
-          <button id="closeTransactionModal" class="icon-btn" type="button" aria-label="Fechar nova movimentação">✕</button>
+          <button id="closeTransactionModal" class="icon-btn" type="button" aria-label="Fechar nova movimentação"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
         </div>
 
         <form id="transactionForm" class="transaction-form-shell">
@@ -656,7 +678,7 @@
             <p class="eyebrow">Configurações</p>
             <h2 id="settingsTitle">Receitas e gastos fixos</h2>
           </div>
-          <button id="closeSettings" class="icon-btn" type="button" aria-label="Fechar configurações">✕</button>
+          <button id="closeSettings" class="icon-btn" type="button" aria-label="Fechar configurações"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
         </div>
 
         
@@ -786,9 +808,9 @@
 
   <script src="vendor/supabase.min.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
   <script src="vendor/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"></script>
-  <script src="financial-validation.js?v=6.10.0"></script>
-  <script src="sync.js?v=6.10.0"></script>
-  <script src="app.js?v=6.10.0"></script>
+  <script src="financial-validation.js?v=7.0.1"></script>
+  <script src="sync.js?v=7.0.1"></script>
+  <script src="app.js?v=7.0.1"></script>
 </body>
 </html>
 

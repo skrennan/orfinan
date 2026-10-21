@@ -220,6 +220,26 @@ function harness() {
   event=request('https://app.test/app.js');events.fetch(event);assert.equal((await event.response).type,'error','A missing script never receives HTML fallback');
   let activation;events.activate({waitUntil:p=>activation=p});await activation;assert.deepEqual(deleted,['orgfinan-v6.6.0']);
   console.log('PASS service worker excludes APIs, authorization and tokens; safe offline fallback and cache cleanup');
+  for (const origin of ['http://localhost:5500','http://127.0.0.1:5500','http://[::1]:5500']) {
+    sw.self.location.origin=origin;
+    const localEvent=request(`${origin}/style.css?v=7.0.1`);
+    events.fetch(localEvent);
+    assert.equal(localEvent.response,undefined,'Local preview always bypasses PWA cache');
+  }
+  console.log('PASS Live Server cache bypass on localhost, IPv4 and IPv6');
+  const appSource=fs.readFileSync(path.join(root,'app.js'),'utf8');
+  const registrationSource=appSource.slice(appSource.indexOf('if ("serviceWorker" in navigator)'),appSource.indexOf('// Initial field defaults'));
+  let loadPreview,removed=0,reloaded=0,registered=0;
+  const previewWindow={location:{hostname:'127.0.0.1',href:'http://127.0.0.1:5500/app/index.html',reload:()=>reloaded++},addEventListener:(name,fn)=>{loadPreview=fn;}};
+  const previewWorker={controller:{scriptURL:'http://127.0.0.1:5500/app/service-worker.js'},getRegistrations:async()=>[
+    {active:{scriptURL:'http://127.0.0.1:5500/app/service-worker.js'},unregister:async()=>{removed++;return true;}},
+    {active:{scriptURL:'http://127.0.0.1:5500/other/service-worker.js'},unregister:async()=>{throw new Error('Unrelated local app must be preserved');}}
+  ],register:async()=>{registered++;}};
+  vm.runInNewContext(registrationSource,{navigator:{serviceWorker:previewWorker},window:previewWindow,URL,console});
+  await loadPreview();
+  assert.equal(removed,1);assert.equal(reloaded,1);assert.equal(registered,0);
+  previewWindow.location.hostname='app.test';await loadPreview();assert.equal(registered,1,'Published app retains offline registration');
+  console.log('PASS local preview removes only its own worker; production keeps offline support');
 
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   for(const match of html.matchAll(/src="(vendor\/[^"]+)" integrity="sha384-([^"]+)"/g)) assert.equal(require('node:crypto').createHash('sha384').update(fs.readFileSync(path.join(root,match[1]))).digest('base64'),match[2]);
