@@ -1,0 +1,1360 @@
+{
+ "url": "index.html",
+ "at": "2026-10-21T19:37:56.279Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1280,
+   "height": 800,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.43,
+    0.41
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1280,
+     "h": 800
+    },
+    "page": {
+     "height": 1032,
+     "screens": 1.3,
+     "words": 86,
+     "img": 0,
+     "video": 0,
+     "canvas": 4,
+     "svg": 11,
+     "sections": 22,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "chars": 15,
+     "lines": 1,
+     "size": 18,
+     "vw": 1.4,
+     "font": "Bahnschrift",
+     "weight": 650,
+     "tracking": -0.02,
+     "leading": 1.15,
+     "top": 37,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "lines": 1,
+     "size": 18.4,
+     "font": "Bahnschrift"
+    },
+    "headings": [
+     {
+      "text": "Seu dinheiro. Seu próximo passo.",
+      "words": 5,
+      "chars": 32,
+      "lines": 2,
+      "size": 53.8,
+      "vw": 4.2,
+      "font": "Bahnschrift",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.02,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.34,
+      "top": 285,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Bahnschrift",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      13,
+      14,
+      16,
+      18,
+      20,
+      22,
+      54
+     ],
+     "sizeCount": 8,
+     "notLoaded": [],
+     "body": {
+      "font": "Bahnschrift",
+      "size": 16,
+      "leading": 1.8,
+      "weight": 400,
+      "tracking": -0.01,
+      "contrast": 7.5
+     },
+     "measureChars": 46,
+     "max": {
+      "size": 53.8,
+      "vw": 4.2,
+      "font": "Bahnschrift",
+      "text": "Seu dinheiro.Seu próximo passo."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.16,
+     "smallText": 3
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#101722",
+     "bodyBgHsl": {
+      "h": 217,
+      "s": 0.36,
+      "l": 0.1
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#101722",
+       "top": 0,
+       "hsl": {
+        "h": 217,
+        "s": 0.36,
+        "l": 0.1
+       }
+      },
+      {
+       "color": "#192432",
+       "top": 155,
+       "hsl": {
+        "h": 214,
+        "s": 0.33,
+        "l": 0.15
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#a4a7ad",
+       "share": 0.63
+      },
+      {
+       "color": "#efeeeb",
+       "share": 0.22
+      },
+      {
+       "color": "#d1d3d7",
+       "share": 0.06
+      },
+      {
+       "color": "#b3cbe1",
+       "share": 0.04
+      },
+      {
+       "color": "#8f99a8",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#213044",
+      "hsl": {
+       "h": 214,
+       "s": 0.35,
+       "l": 0.2
+      },
+      "fg": "#efeeeb"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 5,
+     "inHero": 5,
+     "radius": 6,
+     "height": 50,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Instalar app",
+      "Entrar",
+      "Entrar",
+      "Esqueci minha senha",
+      "G Continuar com Google"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 1,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 3,
+     "hairlineSamples": [
+      "header.app-header 1280px",
+      "div.intro-ledger 370px",
+      "p.auth-footnote 397px"
+     ],
+     "outlinedBoxes": 1,
+     "dashed": 0,
+     "blurred": 2,
+     "roundedBoxes": 1,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 0,
+     "fixed": true,
+     "height": 73,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 1280,
+     "h": 800
+    },
+    "pageH": 1032,
+    "margins": {
+     "left": 68,
+     "right": 65
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Minhas Finanças",
+      "size": 18,
+      "top": 37,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 158,
+      "n": 3
+     },
+     {
+      "x": 68,
+      "n": 1
+     },
+     {
+      "x": 740,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 5,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.09,
+    "voidBox": {
+     "x": 267,
+     "y": 533,
+     "w": 427,
+     "h": 213
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1280,
+     "h": 800
+    },
+    "dark": true,
+    "ground": "#101722",
+    "sidebar": null,
+    "topbar": {
+     "h": 73
+    },
+    "canvas": {
+     "left": 68,
+     "right": 50
+    },
+    "hero": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "chars": 15,
+     "lines": 1,
+     "size": 18,
+     "vw": 1.4,
+     "font": "Bahnschrift",
+     "weight": 650,
+     "tracking": -0.02,
+     "leading": 1.15,
+     "top": 37,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 2,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 2,
+     "radii": [
+      [
+       0,
+       1
+      ],
+      [
+       12,
+       1
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#455d77 on #101722 (2.64:1)"
+     ],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 1
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.36,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      22,
+      26,
+      27,
+      28,
+      30,
+      34,
+      35,
+      42,
+      54,
+      74
+     ]
+    },
+    "title": {
+     "text": "Minhas Finanças",
+     "size": 18,
+     "top": 37
+    },
+    "colourShare": 0.018
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.56,
+    0.49
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 1185,
+     "screens": 1.2,
+     "words": 68,
+     "img": 0,
+     "video": 0,
+     "canvas": 4,
+     "svg": 11,
+     "sections": 22,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "chars": 15,
+     "lines": 1,
+     "size": 18,
+     "vw": 2.4,
+     "font": "Bahnschrift",
+     "weight": 650,
+     "tracking": -0.02,
+     "leading": 1.15,
+     "top": 37,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "lines": 1,
+     "size": 18.4,
+     "font": "Bahnschrift"
+    },
+    "headings": [
+     {
+      "text": "Seu dinheiro.Seu próximo passo.",
+      "words": 4,
+      "chars": 31,
+      "lines": 2,
+      "size": 36.8,
+      "vw": 4.8,
+      "font": "Bahnschrift",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.02,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.6,
+      "top": 123,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Bahnschrift",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      13,
+      14,
+      16,
+      18,
+      22,
+      37
+     ],
+     "sizeCount": 7,
+     "notLoaded": [],
+     "body": {
+      "font": "Bahnschrift",
+      "size": 14.1,
+      "leading": 1.8,
+      "weight": 400,
+      "tracking": -0.011,
+      "contrast": 7.5
+     },
+     "measureChars": 46,
+     "max": {
+      "size": 36.8,
+      "vw": 4.8,
+      "font": "Bahnschrift",
+      "text": "Seu dinheiro.Seu próximo passo."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.19,
+     "smallText": 2
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#101722",
+     "bodyBgHsl": {
+      "h": 217,
+      "s": 0.36,
+      "l": 0.1
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#101722",
+       "top": 0,
+       "hsl": {
+        "h": 217,
+        "s": 0.36,
+        "l": 0.1
+       }
+      },
+      {
+       "color": "#192432",
+       "top": 308,
+       "hsl": {
+        "h": 214,
+        "s": 0.33,
+        "l": 0.15
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#a4a7ad",
+       "share": 0.64
+      },
+      {
+       "color": "#efeeeb",
+       "share": 0.27
+      },
+      {
+       "color": "#b3cbe1",
+       "share": 0.05
+      },
+      {
+       "color": "#8f99a8",
+       "share": 0.03
+      },
+      {
+       "color": "#101722",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#213044",
+      "hsl": {
+       "h": 214,
+       "s": 0.35,
+       "l": 0.2
+      },
+      "fg": "#efeeeb"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 5,
+     "inHero": 5,
+     "radius": 6,
+     "height": 50,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Instalar app",
+      "Entrar",
+      "Entrar",
+      "Esqueci minha senha",
+      "G Continuar com Google"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 1,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 2,
+     "hairlineSamples": [
+      "header.app-header 768px",
+      "p.auth-footnote 414px"
+     ],
+     "outlinedBoxes": 1,
+     "dashed": 0,
+     "blurred": 2,
+     "roundedBoxes": 1,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 0,
+     "fixed": true,
+     "height": 73,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 1185,
+    "margins": {
+     "left": 34,
+     "right": 16
+    },
+    "sections": [
+     {
+      "sel": "div.auth-introduction",
+      "tag": "div",
+      "top": 123,
+      "height": 161,
+      "words": 25,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Seu dinheiro.",
+       "size": 37,
+       "tag": "h2"
+      },
+      "left": 152,
+      "right": 227,
+      "textLeft": 152,
+      "textRight": 227,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "div.auth-card",
+      "tag": "div",
+      "top": 308,
+      "height": 687,
+      "words": 35,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Seu espaço financeiro",
+       "size": 22,
+       "tag": "h2"
+      },
+      "left": 177,
+      "right": 177,
+      "textLeft": 177,
+      "textRight": 216,
+      "fullBleed": false,
+      "footer": true,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Minhas Finanças",
+      "size": 18,
+      "top": 37,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 152,
+      "n": 3
+     },
+     {
+      "x": 34,
+      "n": 1
+     },
+     {
+      "x": 177,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 5,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": true,
+    "ground": "#101722",
+    "sidebar": null,
+    "topbar": {
+     "h": 73
+    },
+    "canvas": {
+     "left": 34,
+     "right": 16
+    },
+    "hero": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "chars": 15,
+     "lines": 1,
+     "size": 18,
+     "vw": 2.4,
+     "font": "Bahnschrift",
+     "weight": 650,
+     "tracking": -0.02,
+     "leading": 1.15,
+     "top": 37,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 1,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 1,
+     "radii": [
+      [
+       12,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 1
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.35,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      22,
+      23,
+      24,
+      26,
+      27,
+      31,
+      37,
+      46
+     ]
+    },
+    "title": {
+     "text": "Minhas Finanças",
+     "size": 18,
+     "top": 37
+    },
+    "colourShare": 0.024
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.78,
+    0.67
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 1178,
+     "screens": 1.4,
+     "words": 64,
+     "img": 0,
+     "video": 0,
+     "canvas": 4,
+     "svg": 11,
+     "sections": 22,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "chars": 15,
+     "lines": 1,
+     "size": 16,
+     "vw": 4,
+     "font": "Bahnschrift",
+     "weight": 650,
+     "tracking": -0.02,
+     "leading": 1.15,
+     "top": 27,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "lines": 1,
+     "size": 15.7,
+     "font": "Bahnschrift"
+    },
+    "headings": [
+     {
+      "text": "Seu dinheiro. Seu próximo passo.",
+      "words": 5,
+      "chars": 32,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 7.8,
+      "font": "Bahnschrift",
+      "weight": 600,
+      "tracking": -0.03,
+      "leading": 1.02,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.83,
+      "top": 101,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Bahnschrift",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      13,
+      14,
+      16,
+      22,
+      30
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": {
+      "font": "Bahnschrift",
+      "size": 14,
+      "leading": 1.55,
+      "weight": 400,
+      "tracking": -0.011,
+      "contrast": 7.5
+     },
+     "measureChars": 46,
+     "max": {
+      "size": 30.4,
+      "vw": 7.8,
+      "font": "Bahnschrift",
+      "text": "Seu dinheiro.Seu próximo passo."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.18,
+     "smallText": 1
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#101722",
+     "bodyBgHsl": {
+      "h": 217,
+      "s": 0.36,
+      "l": 0.1
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#101722",
+       "top": 0,
+       "hsl": {
+        "h": 217,
+        "s": 0.36,
+        "l": 0.1
+       }
+      },
+      {
+       "color": "#192432",
+       "top": 260,
+       "hsl": {
+        "h": 214,
+        "s": 0.33,
+        "l": 0.15
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#a4a7ad",
+       "share": 0.64
+      },
+      {
+       "color": "#efeeeb",
+       "share": 0.26
+      },
+      {
+       "color": "#b3cbe1",
+       "share": 0.05
+      },
+      {
+       "color": "#8f99a8",
+       "share": 0.03
+      },
+      {
+       "color": "#101722",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#33465c",
+      "hsl": {
+       "h": 212,
+       "s": 0.29,
+       "l": 0.28
+      },
+      "fg": "#efeeeb"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 4,
+     "inHero": 4,
+     "radius": 6,
+     "height": 50,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Entrar",
+      "Entrar",
+      "Esqueci minha senha",
+      "G Continuar com Google"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 1,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 2,
+     "hairlineSamples": [
+      "header.app-header 390px",
+      "p.auth-footnote 302px"
+     ],
+     "outlinedBoxes": 1,
+     "dashed": 0,
+     "blurred": 2,
+     "roundedBoxes": 1,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 0,
+     "fixed": true,
+     "height": 73,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 1178,
+    "margins": {
+     "left": 24,
+     "right": 33
+    },
+    "sections": [
+     {
+      "sel": "div.auth-introduction",
+      "tag": "div",
+      "top": 101,
+      "height": 139,
+      "words": 25,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Seu dinheiro.",
+       "size": 30,
+       "tag": "h2"
+      },
+      "left": 33,
+      "right": 33,
+      "textLeft": 33,
+      "textRight": 33,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "div.auth-card",
+      "tag": "div",
+      "top": 260,
+      "height": 666,
+      "words": 35,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Seu espaço financeiro",
+       "size": 22,
+       "tag": "h2"
+      },
+      "left": 44,
+      "right": 44,
+      "textLeft": 44,
+      "textRight": 81,
+      "fullBleed": false,
+      "footer": true,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Minhas Finanças",
+      "size": 16,
+      "top": 27,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 24,
+      "n": 4
+     },
+     {
+      "x": 44,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 5,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": true,
+    "ground": "#101722",
+    "sidebar": null,
+    "topbar": {
+     "h": 73
+    },
+    "canvas": {
+     "left": 24,
+     "right": 33
+    },
+    "hero": {
+     "text": "Minhas Finanças",
+     "words": 2,
+     "chars": 15,
+     "lines": 1,
+     "size": 16,
+     "vw": 4,
+     "font": "Bahnschrift",
+     "weight": 650,
+     "tracking": -0.02,
+     "leading": 1.15,
+     "top": 27,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 1,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 1,
+     "radii": [
+      [
+       12,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 1
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.3,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      22,
+      24,
+      26,
+      27,
+      30,
+      35
+     ]
+    },
+    "title": {
+     "text": "Minhas Finanças",
+     "size": 16,
+     "top": 27
+    },
+    "colourShare": 0.04
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1280,
+   "fold": "C:\\Users\\SUPORTE INFORSYS\\Documents\\ORGFINAN\\.taste-skill\\review\\desktop-fold.jpg",
+   "pages": [
+    "C:\\Users\\SUPORTE INFORSYS\\Documents\\ORGFINAN\\.taste-skill\\review\\desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "C:\\Users\\SUPORTE INFORSYS\\Documents\\ORGFINAN\\.taste-skill\\review\\tablet-fold.jpg",
+   "pages": [
+    "C:\\Users\\SUPORTE INFORSYS\\Documents\\ORGFINAN\\.taste-skill\\review\\tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "C:\\Users\\SUPORTE INFORSYS\\Documents\\ORGFINAN\\.taste-skill\\review\\mobile-fold.jpg",
+   "pages": [
+    "C:\\Users\\SUPORTE INFORSYS\\Documents\\ORGFINAN\\.taste-skill\\review\\mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

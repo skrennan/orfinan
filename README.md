@@ -1,4 +1,4 @@
-﻿# Minhas Finanças — V6.9.0
+# Minhas Finanças — V6.10.0
 
 Aplicação estática em HTML, CSS e JavaScript, com visual Fluent/Metro. O Netlify executa `node scripts/build.cjs` e publica somente a pasta `dist/` gerada com os arquivos públicos do app.
 
@@ -113,3 +113,14 @@ O botão Esqueci minha senha envia o link pelo Supabase Auth com o SMTP configur
 Em Authentication > URL Configuration, configure Site URL com o endereço publicado e adicione a Redirect URLs o endereço completo `https://SEU-SITE.netlify.app/?recovery=1`, substituindo pelo endereço real e mantendo o caminho do app se houver. No template Reset Password, mantenha `{{ .ConfirmationURL }}`.
 
 Após publicar, solicite o link para uma conta existente, confira inbox/spam, altere a senha e entre novamente verificando seus dados. Os testes locais simulam Auth e não comprovam entrega pelo Gmail ou configuração remota.
+
+## Uso diário — versão 6.10
+
+- Contas pendentes aparecem antes das pagas, em ordem de vencimento. O resumo destaca contas vencidas; datas com dia 31 respeitam o último dia de cada mês.
+- Um pagamento pode ser desfeito na própria linha, sem excluir a conta.
+- Meses vazios oferecem adicionar o primeiro lançamento; buscas sem resultado oferecem limpar os filtros.
+- Um novo lançamento em mês histórico começa no primeiro dia desse mês. No mês atual, usa hoje quando a data anterior pertence a outro período.
+- Painel mais compacto e contas antes do bloco de lançamento no celular; o botão Novo lançamento permanece na navegação inferior.
+- Recuperação e cadastro com títulos específicos, feedback legível e controles de toque maiores.
+
+Validação: node tests/security.cjs e node tests/mobile-modal.cjs --screenshots --real-charts --real-supabase. O teste visual usa dados simulados e verifica pagamento/desfazer, mês histórico, recuperação, filtros, teclado e sete tamanhos de tela. A inicialização do Edge tolera bloqueio temporário do arquivo DevToolsActivePort. Não há migração de banco nesta versão. O envio real de e-mail depende de teste em produção.

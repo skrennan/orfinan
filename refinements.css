@@ -365,6 +365,81 @@ body :is(.motion-left, .motion-right, .motion-up, .motion-scale, .motion-list-it
 body select { color-scheme:dark; }
 body select option, body select optgroup { background:#192432 !important; color:#efeeeb !important; }
 body input:-webkit-autofill { -webkit-text-fill-color:#efeeeb; -webkit-box-shadow:0 0 0 1000px #131e2c inset; caret-color:#efeeeb; }
+
+/* Monthly tasks: keep the balance, next payment and entry action within easy reach. */
+body { --text-secondary:#b7c2ce; }
+::selection { background:#b3cbe1; color:#101722; }
+body input, body select { caret-color:#b3cbe1; }
+.editorial-balance-main > strong { letter-spacing:-.035em; }
+.editorial-head { margin-bottom:20px; }
+.editorial-greeting h2 { font-size:clamp(1.65rem,3vw,2.2rem) !important; }
+.editorial-label { display:none; }
+.editorial-balance-main { padding:28px 32px !important; }
+.editorial-status { margin-top:16px; }
+.editorial-flow > div { padding:14px 24px !important; }
+.editorial-balance { margin-bottom:20px !important; }
+.bills-attention { margin:0 0 16px; color:var(--text-secondary); font-size:.875rem; line-height:1.5; }
+.bills-attention[data-tone="overdue"] { color:#edb7b2; }
+.bills-attention[data-tone="paid"] { color:var(--positive); }
+.fixed-status[data-bill-state="overdue"] .bill-due { color:#edb7b2; }
+.fixed-status[data-bill-state="today"] .bill-due { color:#e8ca98; }
+.fixed-status[data-bill-state="paid"] .bill-due { color:var(--positive); }
+.fixed-status-right { gap:8px; }
+.fixed-status .status-btn { min-height:44px; font-size:.8rem; padding:8px 12px; }
+.fixed-status .status-btn.paid { background:transparent !important; color:var(--text-secondary) !important; border:1px solid #455d77; }
+.fixed-status .status-btn.paid:hover { color:var(--text) !important; border-color:var(--accent); }
+.fixed-status small { font-size:.8rem; }
+#emptyTransactionAction { display:block; margin:14px auto 0; min-height:44px; }
+#emptyTransactionAction.hidden { display:none; }
+.activity-filters button, .period-arrow, .period-today { min-height:44px; }
+#forgotPasswordBtn { display:block; width:100%; margin-top:8px; min-height:44px; background:transparent !important; border-color:transparent !important; color:#b3cbe1 !important; font-size:.875rem; }
+#forgotPasswordBtn:hover { text-decoration:underline; text-underline-offset:4px; }
+#forgotPasswordBtn.hidden { display:none; }
+#recoveryForm { margin-top:20px; }
+#recoveryHint { color:var(--text-secondary); font-size:.9rem; line-height:1.6; }
+.auth-message { overflow-wrap:anywhere; }
+.auth-message:empty { display:none; }
+.auth-introduction h2 { font-size:clamp(2.3rem,4.2vw,3.5rem); letter-spacing:-.035em; }
+.auth-divider { margin-block:18px; }
+.auth-message:not(:empty) { padding:12px 14px; background:#131e2c; border-radius:6px; line-height:1.6; }
+.auth-message.error { color:#edb7b2; }
+.auth-message.success { color:#b1d6c4; }
+.auth-form button:disabled { opacity:.65; cursor:wait; }
+@media (min-width:801px) {
+  /* Two columns close on the same canvas edges: (width - 20px gutter) × .425/.575. */
+  .editorial-balance { grid-template-columns:1.15fr 1fr !important; }
+  .editorial-flow { display:grid !important; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+  .editorial-flow > div { display:flex; flex-direction:column; justify-content:center; gap:6px; }
+  .editorial-flow > div:last-child { grid-column:1 / -1; flex-direction:row; justify-content:space-between; align-items:center; border-top:1px solid #33465c; }
+  .editorial-flow > div:first-child { border-right:1px solid #33465c; }
+}
+@media (max-width:580px) {
+  .app-shell { padding-top:20px !important; }
+  .editorial-head { gap:14px !important; margin-bottom:16px; }
+  .editorial-greeting h2 { margin-top:0; font-size:1.65rem !important; }
+  .editorial-greeting p { margin-top:4px; font-size:.825rem; }
+  .period-stepper .editorial-month { padding:2px 8px; }
+  .period-stepper { padding:2px; }
+  .editorial-balance-main { padding:20px !important; }
+  .editorial-balance-main > strong { margin-top:10px !important; font-size:clamp(2rem,9vw,2.6rem) !important; }
+  .editorial-status { margin-top:12px; }
+  .balance-explanation { margin-top:10px; font-size:.8rem; }
+  .editorial-flow > div { padding:12px 16px !important; }
+  .editorial-flow strong { font-size:1.15rem !important; }
+  .editorial-flow span { font-size:.8rem; }
+  .main-grid { gap:16px !important; }
+  .main-grid .quick-add-panel { order:2; }
+  .quick-add-panel { padding:18px !important; }
+  .quick-add-panel .panel-head { margin-bottom:12px !important; }
+  .quick-add-card { padding:14px 12px !important; }
+  .quick-add-card small { font-size:.8rem; }
+  .month-insight { margin-top:16px; padding-top:16px; }
+  .auth-screen { padding-top:0 !important; gap:20px; }
+  .auth-introduction h2 { font-size:1.9rem; letter-spacing:-.03em; }
+  .auth-introduction > p:not(.intro-note) { font-size:.875rem; line-height:1.55; margin-top:12px; }
+  .auth-card { padding:22px 20px !important; }
+  .auth-brand h2 { font-size:1.35rem !important; }
+}
 @media (prefers-reduced-transparency:reduce) {
   .panel, .editorial-balance, .modal, .transaction-sheet, .auth-card, .bottom-nav { background:#192432 !important; }
 }

@@ -32,9 +32,17 @@ let browser, socket;
   browser = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', ['--headless=new', '--disable-gpu', '--no-first-run', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: 'ignore' });
   browser.on('error', error => { console.error(error); });
   const portFile = path.join(profile, 'DevToolsActivePort');
-  for (let i = 0; !fs.existsSync(portFile) && i < 100; i++) await new Promise(resolve => setTimeout(resolve, 100));
-  assert.ok(fs.existsSync(portFile), 'Edge must start its debugging endpoint');
-  const port = fs.readFileSync(portFile, 'utf8').split('\n')[0];
+  let port;
+  for (let i = 0; !port && i < 100; i++) {
+    try {
+      const candidate = fs.readFileSync(portFile, 'utf8').split('\n')[0].trim();
+      if (/^\d+$/.test(candidate)) port = candidate;
+    } catch (error) {
+      if (!['ENOENT', 'EBUSY', 'EACCES'].includes(error.code)) throw error;
+    }
+    if (!port) await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.ok(port, 'Edge must start its debugging endpoint');
   const targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
   socket = new WebSocket(targets.find(target => target.type === 'page').webSocketDebuggerUrl);
   await new Promise(resolve => socket.addEventListener('open', resolve, { once: true }));
@@ -79,10 +87,22 @@ let browser, socket;
   assert.equal(await evaluate('$("#authPassword").type'),'password');
   await screenshot('login-desktop',1280,900);
   await screenshot('login-mobile',390,844);
+  await evaluate(`$('#forgotPasswordBtn').click();`);
+  assert.equal(await evaluate('$("#authTitle").textContent'),'Recuperar acesso');
+  assert.equal(await evaluate('$("#recoveryEmail").required'),true);
+  await screenshot('recovery-mobile',390,844);
+  await evaluate(`$('#recoveryBackBtn').click();`);
+  assert.equal(await evaluate('$("#authForm").classList.contains("hidden")'),false);
   await evaluate(`localStorage.setItem(KEYS.settings, JSON.stringify({completed:true,incomes:[{id:'i',name:'Teste',type:'Salário',amount:3000,day:5}],fixedExpenses:[{id:'f',name:'Teste',category:'Casa',amount:100,day:10}]})); showDashboard();`);
   await evaluate(`localStorage.setItem(KEYS.transactions,JSON.stringify([{id:'a',type:'expense',description:'Café da manhã',amount:18.5,category:'Alimentação',date:localToday(),createdAt:1},{id:'b',type:'income',description:'Projeto freelance',amount:450,category:'Freelance',date:localToday(),createdAt:2},{id:'c',type:'expense',description:'Compras da semana',amount:186.7,category:'Alimentação',date:localToday(),createdAt:3}])); renderDashboard();`);
   await screenshot('dashboard-desktop',1280,1000);
   await screenshot('dashboard-mobile',390,844);
+  await evaluate(`$('#fixedStatusList [data-payment-status="pending"]').click();`);
+  assert.equal(await evaluate('getFixedPaymentStatus(selectedMonth(),"f").status'),'paid');
+  assert.equal(await evaluate('$("#billsAttention").dataset.tone'),'paid');
+  await evaluate(`$('#fixedStatusList [data-payment-status="paid"]').click();`);
+  assert.equal(await evaluate('getFixedPaymentStatus(selectedMonth(),"f").status'),'pending');
+  console.log('PASS payment action and undo preserve the bill and update the summary');
   // Regression: selected transaction types must remain readable despite legacy theme rules.
   const typeContrast = await evaluate(`(() => {
     const luminance = color => {
@@ -133,6 +153,11 @@ let browser, socket;
   }
   await evaluate(`$('[data-view="dashboard"]').click();`);
   await evaluate(`localStorage.removeItem(KEYS.transactions); renderDashboard();`);
+  assert.equal(await evaluate('$("#emptyTransactionAction").classList.contains("hidden")'),false);
+  await evaluate(`$('#monthFilter').value='2025-02'; renderDashboard(); $('#emptyTransactionAction').click();`);
+  assert.equal(await evaluate('$("#transactionDate").value'),'2025-02-01','New entry uses selected historical month');
+  await evaluate(`closeTransactionModal(); $('#monthFilter').value=currentMonth(); renderDashboard();`);
+  await screenshot('empty-month-mobile',390,844);
   await evaluate(`updateSyncUI('Sem acesso à nuvem','sync-error');`);
   assert.equal(await evaluate('$("#syncBtn").dataset.syncState'),'sync-error');
   assert.equal(await evaluate('Boolean($("#syncBtn svg"))'),true,'Sync status preserves SVG icon');

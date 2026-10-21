@@ -56,6 +56,13 @@ function harness() {
 }
 
 (async()=>{
+  const dueHarness=harness();
+  assert.equal(dueHarness.exec("fixedDueState({day:31},'2026-02','2026-02-28').date"),'2026-02-28');
+  assert.equal(dueHarness.exec("fixedDueState({day:31},'2028-02','2028-02-28').date"),'2028-02-29');
+  assert.equal(dueHarness.exec("fixedDueState({day:10},'2026-10','2026-10-21').tone"),'overdue');
+  assert.equal(dueHarness.exec("fixedDueState({day:21},'2026-10','2026-10-21').label"),'Vence hoje');
+  assert.equal(dueHarness.exec("fixedDueState({day:1},'2027-01','2026-12-31').tone"),'upcoming');
+  console.log('PASS due dates: short months, leap years, overdue, today and year rollover');
   let h=harness();h.seed('A');let resolve;
   h.client.from=()=>({upsert:()=>new Promise(r=>resolve=r)});
   const upload=h.exec('uploadLocalToCloud()');

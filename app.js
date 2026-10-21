@@ -484,12 +484,35 @@ function getFixedStatusDataset(month = selectedMonth()) {
   });
 }
 
+function fixedDueState(expense, month, today = localToday()) {
+  const lastDay = new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate();
+  const day = Math.min(Math.max(Number(expense.day) || 1, 1), lastDay);
+  const date = `${month}-${String(day).padStart(2, "0")}`;
+  const shortDate = `${String(day).padStart(2, "0")}/${month.slice(5)}`;
+  return {
+    date,
+    tone: date < today ? "overdue" : date === today ? "today" : "upcoming",
+    label: date < today ? `Vencida em ${shortDate}` : date === today ? "Vence hoje" : `Vence em ${shortDate}`,
+  };
+}
+
 function renderFixedStatus(settings) {
   const list = $("#fixedStatusList");
   if (!list) return;
 
   const month = selectedMonth();
-  const fixedExpenses = settings?.fixedExpenses || [];
+  const today = localToday();
+  const fixedExpenses = [...(settings?.fixedExpenses || [])].sort((a, b) => {
+    const paidDifference = Number(getFixedPaymentStatus(month, a.id).status === "paid") - Number(getFixedPaymentStatus(month, b.id).status === "paid");
+    return paidDifference || fixedDueState(a, month, today).date.localeCompare(fixedDueState(b, month, today).date) || String(a.name).localeCompare(String(b.name), "pt-BR");
+  });
+  const pending = fixedExpenses.filter((expense) => getFixedPaymentStatus(month, expense.id).status !== "paid");
+  const overdueCount = pending.filter((expense) => fixedDueState(expense, month, today).tone === "overdue").length;
+  $("#billsAttention").textContent = overdueCount
+    ? `${overdueCount} ${overdueCount === 1 ? "conta vencida" : "contas vencidas"} · confira os pagamentos abaixo`
+    : pending.length ? `${pending.length} ${pending.length === 1 ? "conta pendente" : "contas pendentes"} · ${money(pending.reduce((sum, expense) => sum + Number(expense.amount || 0), 0))}`
+    : fixedExpenses.length ? "Tudo pago neste mês. Seus compromissos estão em dia." : "Adicione suas contas recorrentes em Configurações.";
+  $("#billsAttention").dataset.tone = overdueCount ? "overdue" : pending.length ? "pending" : "paid";
   const paidCount = fixedExpenses.filter((expense) => getFixedPaymentStatus(month, expense.id).status === "paid").length;
   $("#fixedPaymentSummary").textContent = fixedExpenses.length
     ? `${paidCount} de ${fixedExpenses.length} ${fixedExpenses.length === 1 ? "conta paga" : "contas pagas"}`
@@ -503,12 +526,13 @@ function renderFixedStatus(settings) {
   list.innerHTML = fixedExpenses.map((expense) => {
     const payment = getFixedPaymentStatus(month, expense.id);
     const isPaid = payment.status === "paid";
+    const due = fixedDueState(expense, month, today);
 
     return `
-      <div class="fixed-status">
+      <div class="fixed-status" data-bill-state="${isPaid ? "paid" : due.tone}">
         <div>
           <strong>${escapeHTML(expense.name || "Conta fixa")}</strong>
-          <small>${isPaid ? formatPaidAt(payment.paidAt) : `Vencimento: dia ${Math.min(Number(expense.day) || 1, new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate())}`} · ${escapeHTML(expense.category || "Outros")}</small>
+          <small><span class="bill-due">${isPaid ? formatPaidAt(payment.paidAt) : due.label}</span> · ${escapeHTML(expense.category || "Outros")}</small>
         </div>
         <div class="fixed-status-right">
           <strong>${money(Number(expense.amount || 0))}</strong>
@@ -517,9 +541,10 @@ function renderFixedStatus(settings) {
               ? `<button
                   class="status-btn paid"
                   type="button"
-                  disabled
-                  aria-disabled="true"
-                >✓ Pago</button>`
+                  data-fixed-id="${escapeHTML(expense.id)}"
+                  data-payment-status="paid"
+                  aria-label="Desfazer pagamento de ${escapeHTML(expense.name || "conta fixa")}"
+                >Desfazer pagamento</button>`
               : `<button
                   class="status-btn pending"
                   type="button"
@@ -535,11 +560,12 @@ function renderFixedStatus(settings) {
 
   list.querySelectorAll("[data-fixed-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!btn.dataset.fixedId || btn.dataset.paymentStatus !== "pending") return;
+      if (!btn.dataset.fixedId) return;
 
-      setFixedPaymentStatus(month, btn.dataset.fixedId, "paid");
+      const nextStatus = btn.dataset.paymentStatus === "paid" ? "pending" : "paid";
+      setFixedPaymentStatus(month, btn.dataset.fixedId, nextStatus);
       renderDashboard();
-      toast("Conta marcada como paga.");
+      toast(nextStatus === "paid" ? "Conta marcada como paga." : "Pagamento desfeito. Conta pendente novamente.");
     });
   });
 }
@@ -556,6 +582,8 @@ function renderTransactions(transactions) {
     (!search || normalize(`${item.description} ${item.category}`).includes(search))
   );
   $("#emptyTransactions").classList.toggle("hidden", filtered.length > 0);
+  $("#emptyTransactionAction").classList.toggle("hidden", filtered.length > 0);
+  $("#emptyTransactionAction").textContent = transactions.length ? "Limpar busca e filtros" : "Adicionar lançamento neste mês";
   $("#emptyTransactions").textContent = transactions.length
     ? "Nenhuma movimentação encontrada. Experimente outra busca ou selecione Todas."
     : "Seu histórico começa com o primeiro lançamento. Use Novo para registrar uma receita ou despesa.";
@@ -588,6 +616,11 @@ function renderTransactions(transactions) {
 $("#transactionSearch").addEventListener("input", (event) => {
   transactionFilters.search = event.target.value;
   renderTransactions(monthTransactions());
+});
+
+$("#emptyTransactionAction").addEventListener("click", () => {
+  if (monthTransactions().length) $("#clearTransactionFilters").click();
+  else openTransactionModal();
 });
 
 $("#clearTransactionFilters").addEventListener("click", () => {
@@ -1494,6 +1527,8 @@ function showRecoveryForm(update = false) {
     $(`#${id}`).value = "";
   }
   $("#recoveryHint").textContent = update ? "Escolha uma nova senha para sua conta." : "Informe o e-mail da sua conta para receber o link de recuperação.";
+  $("#authTitle").textContent = update ? "Crie sua nova senha" : "Recuperar acesso";
+  $("#authSubtitle").textContent = "Sua conta e seus dados financeiros continuam os mesmos.";
   $("#recoverySubmitBtn").textContent = update ? "Salvar nova senha" : "Enviar link de recuperação";
   $("#recoverySubmitBtn").disabled = update && !recoverySessionReady;
 }
@@ -1567,6 +1602,9 @@ function setAuthMode(mode) {
   for (const selector of ["#authForm", ".auth-tabs", "#forgotPasswordBtn", "#googleLoginBtn", ".auth-divider"]) $(selector).classList.remove("hidden");
   authMode = mode;
   const signup = mode === "signup";
+  $("#authTitle").textContent = signup ? "Comece a organizar seu mês" : "Seu espaço financeiro";
+  $("#authSubtitle").textContent = signup ? "Crie sua conta para salvar e sincronizar seus dados." : "Entre para acompanhar seu mês.";
+  $("#forgotPasswordBtn").classList.toggle("hidden", signup);
   $("#loginTab").classList.toggle("active", !signup);
   $("#signupTab").classList.toggle("active", signup);
   $("#authNameWrap").classList.toggle("hidden", !signup);
@@ -2237,6 +2275,12 @@ function openTransactionModal() {
   const modal = $("#transactionModal");
   if (!modal || !modal.classList.contains("hidden")) return;
   if (!$("#settingsPanel").classList.contains("hidden")) closeSettingsDialog();
+  // A new entry belongs to the period the person is viewing, including historical months.
+  const month = selectedMonth();
+  const previousDate = $("#transactionDate").value;
+  if (!previousDate || !previousDate.startsWith(month)) {
+    $("#transactionDate").value = month === currentMonth() ? localToday() : `${month}-01`;
+  }
 
   transactionModalOpener = document.activeElement;
   transactionModalPreviousOverflow = document.body.style.overflow;
