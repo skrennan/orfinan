@@ -1,4 +1,4 @@
-const CACHE = "orgfinan-v6.9.0";
+const CACHE = "orgfinan-v6.9.2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -36,7 +36,11 @@ self.addEventListener("fetch", (event) => {
   const allowed = new Set(ASSETS.map((asset) => new URL(asset, self.registration.scope).pathname));
   if (!allowed.has(url.pathname)) return;
 
-  event.respondWith(
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const cached = await cache.match(url.pathname);
+    if (cached) return cached;
+    return (
     fetch(event.request)
       .then((response) => {
         if (response.ok) {
@@ -52,5 +56,6 @@ self.addEventListener("fetch", (event) => {
         if (event.request.mode === "navigate") return (await cache.match(new URL("./index.html", self.registration.scope).pathname)) || Response.error();
         return Response.error();
       })
-  );
+    );
+  })());
 });

@@ -166,6 +166,37 @@ function harness() {
   assert.equal([...h.timers.values()].some(job=>job.delay===3000),true);
   console.log('PASS first insert, offline preservation and edits during an upload');
 
+  h=harness();
+  let recoveryRequests=0, updatedPassword;
+  h.client.auth.resetPasswordForEmail=async(email, options)=>{
+    recoveryRequests++; assert.equal(email,'test@example.test');
+    assert.equal(options.redirectTo,'http://localhost/?recovery=1');
+    return {error:null};
+  };
+  h.node('#forgotPasswordBtn').listeners.click();
+  h.node('#recoveryEmail').value='test@example.test';
+  await h.node('#recoveryForm').listeners.submit({preventDefault(){}});
+  assert.equal(recoveryRequests,1);
+  await h.node('#recoveryForm').listeners.submit({preventDefault(){}});
+  assert.equal(recoveryRequests,1,'Repeated requests are throttled');
+  h.auth('PASSWORD_RECOVERY',{user:{id:'A'}});
+  h.auth('USER_UPDATED',{user:{id:'A'}});
+  assert.equal(h.exec('CLOUD.user'),null,'Recovery never enters financial synchronization');
+  h.client.auth.updateUser=async({password})=>{updatedPassword=password;return {error:null};};
+  h.node('#newPassword').value='new-secret';h.node('#confirmPassword').value='different';
+  await h.node('#recoveryForm').listeners.submit({preventDefault(){}});
+  assert.equal(updatedPassword,undefined,'Mismatched passwords never reach Supabase');
+  h.node('#confirmPassword').value='new-secret';
+  await h.node('#recoveryForm').listeners.submit({preventDefault(){}});
+  assert.equal(updatedPassword,'new-secret');
+  assert.equal(h.node('#newPassword').value,'');
+  assert.equal(h.exec('passwordRecovery'),false);
+  assert.equal(h.node('#authForm').classList.contains('hidden'),false);
+  h=harness();h.exec('passwordRecovery=true');
+  await h.exec('initializeV4()');
+  assert.equal(h.node('#recoverySubmitBtn').disabled,true,'Expired recovery cannot update passwords');
+  console.log('PASS recovery email, throttle, isolated auth events, password confirmation, completion and expired link');
+
   const events={},entries=new Map(),deleted=[];
   const cache={addAll:async()=>{},put:async(k,v)=>entries.set(k,v),match:async k=>entries.get(k)};
   const sw=vm.createContext({URL,Response,Set,self:{location:{origin:'https://app.test'},registration:{scope:'https://app.test/'},clients:{claim(){}},skipWaiting(){},addEventListener:(name,fn)=>events[name]=fn},caches:{open:async()=>cache,keys:async()=>['orgfinan-v6.6.0','other-app-cache'],delete:async key=>deleted.push(key)},fetch:async()=>{throw new Error('offline');}});
@@ -173,7 +204,12 @@ function harness() {
   const request=(url,options={})=>({request:{method:'GET',url,mode:'cors',headers:new Headers(),...options},respondWith(p){this.response=p;},waitUntil(){}});
   for(const event of [request('https://project.supabase.co/rest/v1/financial_data'),request('https://app.test/api/user'),request('https://app.test/app.js',{headers:new Headers({authorization:'Bearer fake'})}),request('https://app.test/app.js?access_token=fake')]) {events.fetch(event);assert.equal(event.response,undefined);}
   entries.set('/index.html',new Response('HTML'));
+  sw.fetch=()=>new Promise(()=>{});
   let event=request('https://app.test/index.html',{mode:'navigate'});events.fetch(event);assert.equal(await(await event.response).text(),'HTML');
+  entries.set('/app.js',new Response('SCRIPT'));
+  event=request('https://app.test/app.js?v=6.9.1');events.fetch(event);assert.equal(await(await event.response).text(),'SCRIPT','Cached assets load without waiting for a stalled network');
+  entries.delete('/app.js');
+  sw.fetch=async()=>{throw new Error('offline');};
   event=request('https://app.test/app.js');events.fetch(event);assert.equal((await event.response).type,'error','A missing script never receives HTML fallback');
   let activation;events.activate({waitUntil:p=>activation=p});await activation;assert.deepEqual(deleted,['orgfinan-v6.6.0']);
   console.log('PASS service worker excludes APIs, authorization and tokens; safe offline fallback and cache cleanup');

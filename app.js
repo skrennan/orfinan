@@ -110,11 +110,13 @@ function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 }
 
-function money(value) {
-  return new Intl.NumberFormat("pt-BR", {
+const moneyFormatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(Number(value) || 0);
+  });
+
+function money(value) {
+  return moneyFormatter.format(Number(value) || 0);
 }
 
 function localToday() {
@@ -470,8 +472,9 @@ function formatPaidAt(iso) {
 
 function getFixedStatusDataset(month = selectedMonth()) {
   const settings = getSettings();
+  const payments = getPaidFixed();
   return (settings?.fixedExpenses || []).map((expense) => {
-    const payment = getFixedPaymentStatus(month, expense.id);
+    const payment = normalizePaidFixedEntry(payments[fixedPaymentKey(month, expense.id)]);
     return {
       expense,
       payment,
@@ -536,7 +539,6 @@ function renderFixedStatus(settings) {
 
       setFixedPaymentStatus(month, btn.dataset.fixedId, "paid");
       renderDashboard();
-      renderReports();
       toast("Conta marcada como paga.");
     });
   });
@@ -644,10 +646,11 @@ function animateNumberText(element, target, {
 } = {}) {
   if (!element) return;
 
+  cancelAnimationFrame(element.numberAnimationFrame);
   const start = Number(element.dataset.value || 0);
   const end = Number(target || 0);
   const startTime = performance.now();
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (start === end || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     element.textContent = currency ? money(end) : `${end.toFixed(decimals).replace(".", ",")}${suffix}`;
     element.dataset.value = String(end);
     return;
@@ -663,21 +666,22 @@ function animateNumberText(element, target, {
     const eased = 1 - Math.pow(1 - progress, 3);
     const current = start + (end - start) * eased;
     element.textContent = format(current);
+    element.dataset.value = String(current);
 
     if (progress < 1) {
-      requestAnimationFrame(step);
+      element.numberAnimationFrame = requestAnimationFrame(step);
     } else {
       element.dataset.value = String(end);
       element.classList.remove("balance-pulse");
-      void element.offsetWidth;
       element.classList.add("balance-pulse");
     }
   }
-  requestAnimationFrame(step);
+  element.numberAnimationFrame = requestAnimationFrame(step);
 }
 
 function animatePlainPercent(element, target) {
   if (!element) return;
+  cancelAnimationFrame(element.percentAnimationFrame);
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     element.textContent = `${Number(target || 0).toFixed(1).replace(".", ",")}%`;
     element.dataset.value = String(Number(target || 0));
@@ -692,10 +696,11 @@ function animatePlainPercent(element, target) {
     const eased = 1 - Math.pow(1 - progress, 3);
     const current = start + (end - start) * eased;
     element.textContent = `${current.toFixed(1).replace(".", ",")}%`;
-    if (progress < 1) requestAnimationFrame(step);
+    element.dataset.value = String(current);
+    if (progress < 1) element.percentAnimationFrame = requestAnimationFrame(step);
     else element.dataset.value = String(end);
   }
-  requestAnimationFrame(step);
+  element.percentAnimationFrame = requestAnimationFrame(step);
 }
 
 
@@ -1083,8 +1088,15 @@ function reportDataset() {
   const basePerMonth = monthRecurringIncome(settings);
   const fixedPerMonth = monthFixedExpense(settings);
 
+  const transactionsByMonth = new Map();
+  for (const item of tx) {
+    const month = item.date.slice(0, 7);
+    if (!transactionsByMonth.has(month)) transactionsByMonth.set(month, []);
+    transactionsByMonth.get(month).push(item);
+  }
+
   const monthly = months.map((month) => {
-    const items = tx.filter((t) => t.date.startsWith(month));
+    const items = transactionsByMonth.get(month) || [];
     const extras = items.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
     const variable = items.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
 
@@ -1453,6 +1465,91 @@ maybeShowIosInstallHelp();
 
 // ===== V4 AUTH + CLOUD SYNC =====
 let authMode = "login";
+// Capture recovery intent before the SDK consumes the URL fragment.
+let passwordRecovery = /(?:[?#&])type=recovery(?:&|$)/.test(window.location.hash || "") ||
+  /(?:[?&])recovery=1(?:&|$)/.test(window.location.search || "");
+let recoverySessionReady = false;
+let recoveryRetryAt = 0;
+
+function clearRecoveryUrl() {
+  const url = new URL(window.location.href || window.location.origin);
+  url.searchParams.delete("recovery");
+  url.hash = "";
+  window.history?.replaceState(null, "", url.href);
+}
+
+function showRecoveryForm(update = false) {
+  showAuthScreen();
+  $("#authForm").classList.add("hidden");
+  $(".auth-tabs").classList.add("hidden");
+  $("#forgotPasswordBtn").classList.add("hidden");
+  $("#googleLoginBtn").classList.add("hidden");
+  $(".auth-divider").classList.add("hidden");
+  $("#recoveryForm").classList.remove("hidden");
+  $("#recoveryEmailWrap").classList.toggle("hidden", update);
+  $("#recoveryEmail").required = !update;
+  for (const id of ["newPassword", "confirmPassword"]) {
+    $(`#${id}Wrap`).classList.toggle("hidden", !update);
+    $(`#${id}`).required = update;
+    $(`#${id}`).value = "";
+  }
+  $("#recoveryHint").textContent = update ? "Escolha uma nova senha para sua conta." : "Informe o e-mail da sua conta para receber o link de recuperação.";
+  $("#recoverySubmitBtn").textContent = update ? "Salvar nova senha" : "Enviar link de recuperação";
+  $("#recoverySubmitBtn").disabled = update && !recoverySessionReady;
+}
+
+$("#forgotPasswordBtn").addEventListener("click", () => {
+  $("#recoveryEmail").value = $("#authEmail").value;
+  showRecoveryForm();
+});
+$("#recoveryBackBtn").addEventListener("click", async () => {
+  if (passwordRecovery) {
+    const { error } = await supabaseClient.auth.signOut({ scope: "local" });
+    if (error) { setAuthMessage("Não foi possível sair da recuperação. Tente novamente.", "error"); return; }
+  }
+  passwordRecovery = false;
+  recoverySessionReady = false;
+  clearRecoveryUrl();
+  setAuthMode("login");
+  showAuthScreen();
+});
+$("#recoveryForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = $("#recoverySubmitBtn");
+  button.disabled = true;
+  try {
+    if (passwordRecovery) {
+      if (!recoverySessionReady) throw new Error("Link inválido ou expirado. Volte e solicite outro e-mail.");
+      const password = $("#newPassword").value;
+      if (password.length < 6) throw new Error("Use pelo menos 6 caracteres na nova senha.");
+      if (password !== $("#confirmPassword").value) throw new Error("As senhas não coincidem.");
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) throw error;
+      $("#newPassword").value = "";
+      $("#confirmPassword").value = "";
+      // Keep recovery isolated from financial synchronization until completion.
+      const { error: signOutError } = await supabaseClient.auth.signOut({ scope: "local" });
+      if (signOutError) throw new Error("Senha atualizada. Clique em Voltar para entrar para encerrar esta sessão.");
+      passwordRecovery = false;
+      recoverySessionReady = false;
+      clearRecoveryUrl();
+      setAuthMode("login");
+      showAuthScreen("Senha atualizada. Entre com sua nova senha.");
+    } else {
+      if (Date.now() < recoveryRetryAt) throw new Error("Aguarde um minuto antes de solicitar outro link.");
+      recoveryRetryAt = Date.now() + 60000;
+      const redirect = new URL(window.location.pathname || "/", window.location.origin);
+      redirect.searchParams.set("recovery", "1");
+      const { error } = await supabaseClient.auth.resetPasswordForEmail($("#recoveryEmail").value.trim(), { redirectTo: redirect.href });
+      if (error) throw error;
+      setAuthMessage("Se houver uma conta elegível com esse e-mail, você receberá um link. Confira também o spam.", "success");
+    }
+  } catch (error) {
+    setAuthMessage(error?.message || "Não foi possível concluir a recuperação. Tente novamente.", "error");
+  } finally {
+    button.disabled = passwordRecovery && !recoverySessionReady;
+  }
+});
 
 function showAuthScreen(message = "") {
   $("#authScreen").classList.remove("hidden");
@@ -1465,6 +1562,9 @@ function showAuthScreen(message = "") {
 }
 
 function setAuthMode(mode) {
+  if (passwordRecovery) return;
+  $("#recoveryForm").classList.add("hidden");
+  for (const selector of ["#authForm", ".auth-tabs", "#forgotPasswordBtn", "#googleLoginBtn", ".auth-divider"]) $(selector).classList.remove("hidden");
   authMode = mode;
   const signup = mode === "signup";
   $("#loginTab").classList.toggle("active", !signup);
@@ -1721,8 +1821,8 @@ async function enterAuthenticatedApp(user) {
   $("#accountEmail").textContent = user.email || "Conta";
   $("#settingsAccountEmail").textContent = user.email || "Conta conectada";
 
-  await ensureProfile(user, context);
-  if (!isCurrentAccount(context)) return;
+  // Profile maintenance does not need to delay financial data loading.
+  void ensureProfile(user, context).catch((error) => console.warn("Profile:", error.message));
   await reconcileCloudAndLocal(context);
   if (!isCurrentAccount(context)) return;
 
@@ -1782,7 +1882,11 @@ async function initializeV4() {
   try {
     const { data: { session }, error } = await supabaseClient.auth.getSession();
     if (error) throw error;
-    if (session?.user) await enterAuthenticatedApp(session.user);
+    if (passwordRecovery) {
+      recoverySessionReady = Boolean(session?.user);
+      showRecoveryForm(true);
+      if (!recoverySessionReady) setAuthMessage("Link inválido ou expirado. Volte e solicite outro e-mail.", "error");
+    } else if (session?.user) await enterAuthenticatedApp(session.user);
     else showAuthScreen();
   } catch (error) {
     console.error(error);
@@ -1939,6 +2043,13 @@ $("#importBackupInput").addEventListener("change", async (event) => {
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
   const authEventEpoch = ++CLOUD.authEventEpoch;
+  if (event === "PASSWORD_RECOVERY" && session?.user) {
+    passwordRecovery = true;
+    recoverySessionReady = true;
+    showRecoveryForm(true);
+    return;
+  }
+  if (passwordRecovery && event !== "SIGNED_OUT") return;
   if (event === "SIGNED_OUT") {
     leaveAuthenticatedApp();
   } else if (["SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event) && session?.user && session.user.id !== CLOUD.user?.id) {
@@ -2029,7 +2140,9 @@ function motionObserverStart() {
 
 function animateRenderedList(containerSelector) {
   const container = document.querySelector(containerSelector);
-  if (!container) return;
+  if (!container || container.closest(".hidden")) return;
+
+  const pending = [];
 
   [...container.children].forEach((el, index) => {
     if (
@@ -2041,10 +2154,11 @@ function animateRenderedList(containerSelector) {
       el.classList.add("motion-list-item");
       el.style.setProperty("--motion-delay", `${Math.min(index * 55, 385)}ms`);
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => el.classList.add("motion-visible"));
-      });
+      if (!el.classList.contains("motion-visible")) pending.push(el);
     }
+  });
+  if (pending.length) requestAnimationFrame(() => {
+    requestAnimationFrame(() => pending.forEach((el) => el.classList.add("motion-visible")));
   });
 }
 

@@ -97,3 +97,19 @@ A mudança preserva a navegação e a lógica financeira, de autenticação e si
 - Testes: dois aparelhos concorrentes, conflito repetido, primeira gravacao, conta sem revisao conhecida, offline e edicoes durante envio; suite anterior e sete tamanhos de tela.
 
 Publicacao: executar `node scripts/build.cjs` e publicar dist. Nao requer nova migracao se o hardening ja foi aplicado (trigger orgfinan_updated_at e UNIQUE(user_id)). Validar dois aparelhos reais apos publicar: abrir a mesma conta em ambos, gravar no primeiro e depois no segundo; o segundo deve oferecer resolucao de conflito. Atualizar todos os aparelhos para substituir clientes antigos. Nenhum deploy ou SQL de producao foi executado nesta rodada.
+
+## Desempenho - versao 6.9.1
+
+- Arquivos publicos usam o cache da versao instalada antes de consultar a rede. A atualizacao do service worker substitui o cache; APIs e dados autenticados continuam excluidos.
+- Formatacao de moeda reutiliza um formatador. Relatorios agrupam lancamentos por mes em uma passagem; contas fixas carregam o mapa de pagamentos uma vez por calculo.
+- Animacoes de valores cancelam execucoes anteriores; listas agrupam callbacks e ignoram paineis ocultos. Marcar uma conta como paga deixa de gerar graficos ocultos.
+- Manutencao do perfil acontece em paralelo ao carregamento financeiro, com isolamento por conta preservado.
+
+Validacao: testes de seguranca e sincronizacao, cache com rede sem resposta, navegador com Chart.js/Supabase reais em sete tamanhos de tela e build estatico. Publicar dist/ para aplicar as correcoes ao site hospedado. Nenhum deploy foi executado.
+## Recuperação de senha
+
+O botão Esqueci minha senha envia o link pelo Supabase Auth com o SMTP configurado. Credenciais SMTP ficam no Supabase. O formulário confirma a nova senha e encerra a sessão local após salvar. A recuperação não inicia a sincronização financeira.
+
+Em Authentication > URL Configuration, configure Site URL com o endereço publicado e adicione a Redirect URLs o endereço completo `https://SEU-SITE.netlify.app/?recovery=1`, substituindo pelo endereço real e mantendo o caminho do app se houver. No template Reset Password, mantenha `{{ .ConfirmationURL }}`.
+
+Após publicar, solicite o link para uma conta existente, confira inbox/spam, altere a senha e entre novamente verificando seus dados. Os testes locais simulam Auth e não comprovam entrega pelo Gmail ou configuração remota.
