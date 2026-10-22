@@ -331,6 +331,16 @@
         </div>
       </section>
 
+      <section class="salary-budget" aria-labelledby="salaryBudgetTitle">
+        <div class="salary-budget-heading">
+          <h3 id="salaryBudgetTitle">Disponível do salário</h3>
+          <strong id="salaryAvailable" aria-live="polite">R$ 0,00</strong>
+        </div>
+        <div id="salaryMeter" class="salary-meter" role="progressbar" aria-label="Salário disponível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="salaryMeterFill"></span></div>
+        <div class="salary-budget-details"><span>Renda mensal cadastrada <strong id="salaryBase">R$ 0,00</strong></span><span>Despesas pagas <strong id="salarySpent">R$ 0,00</strong></span></div>
+        <p id="salaryBudgetHint">Cadastre sua renda mensal nas configurações para acompanhar o disponível.</p>
+      </section>
+
       <section class="summary-grid legacy-summary">
         <article class="summary-card">
           <span>Receita base</span>

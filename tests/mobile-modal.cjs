@@ -105,6 +105,7 @@ let browser, socket;
   assert.equal(await evaluate('$("#authForm").classList.contains("hidden")'),false);
   await evaluate(`localStorage.setItem(KEYS.settings, JSON.stringify({completed:true,incomes:[{id:'i',name:'Salário principal',type:'Salário',amount:3000,day:5}],fixedExpenses:[{id:'f',name:'Internet residencial',category:'Casa',amount:100,day:10}]})); showDashboard();`);
   await evaluate(`localStorage.setItem(KEYS.transactions,JSON.stringify([{id:'a',type:'expense',description:'Café da manhã',amount:18.5,category:'Alimentação',date:localToday(),createdAt:1},{id:'b',type:'income',description:'Projeto freelance',amount:450,category:'Freelance',date:localToday(),createdAt:2},{id:'c',type:'expense',description:'Compras da semana',amount:186.7,category:'Alimentação',date:localToday(),createdAt:3}])); renderDashboard();`);
+  assert.equal(await evaluate('$("#salaryAvailable").textContent'),await evaluate('money(2794.8)'), 'Salary subtracts posted expenses and excludes extra income');
   await screenshot('dashboard-desktop',1280,1000);
   await call('Emulation.setDeviceMetricsOverride', {width:1280,height:1000,deviceScaleFactor:1,mobile:false});
   await evaluate(`$('#navSettingsBtn').focus(); $('#navSettingsBtn').click();`);
@@ -123,9 +124,17 @@ let browser, socket;
   await evaluate('renderDashboard()');
   await evaluate(`$('#fixedStatusList [data-payment-status="pending"]').click();`);
   assert.equal(await evaluate('getFixedPaymentStatus(selectedMonth(),"f").status'),'paid');
+  assert.equal(await evaluate('$("#salaryAvailable").textContent'),await evaluate('money(2694.8)'), 'Paying a bill reduces available salary');
   assert.equal(await evaluate('$("#billsAttention").dataset.tone'),'paid');
   await evaluate(`$('#fixedStatusList [data-payment-status="paid"]').click();`);
   assert.equal(await evaluate('getFixedPaymentStatus(selectedMonth(),"f").status'),'pending');
+  assert.equal(await evaluate('$("#salaryAvailable").textContent'),await evaluate('money(2794.8)'), 'Undo restores available salary');
+  await evaluate('renderSalaryBudget(100,150)');
+  assert.equal(await evaluate('$("#salaryAvailable").textContent'),await evaluate('money(-50)'));
+  assert.equal(await evaluate('$("#salaryMeter").getAttribute("aria-valuenow")'),'0','Deficit does not produce a negative bar');
+  await evaluate('renderSalaryBudget(0,0)');
+  assert.equal(await evaluate('$("#salaryMeterFill").style.width'),'0%','No income has an empty bar');
+  await evaluate('renderDashboard()');
   console.log('PASS payment action and undo preserve the bill and update the summary');
   // Regression: selected transaction types must remain readable despite legacy theme rules.
   const typeContrast = await evaluate(`(() => {

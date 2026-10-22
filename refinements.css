@@ -10,3 +10,14 @@
 body:not(:has(#dashboard:not(.hidden))) .bottom-nav{display:none}
 @media(max-width:580px){.transaction-sheet-body #transactionAmount{font-size:2.4rem;line-height:1.2}}
 @media(max-width:580px){.status-report-grid{gap:12px;margin-bottom:20px}.status-report-card{padding:18px 16px}.status-report-card>strong{font-size:1.25rem}.payment-report-panels{grid-template-columns:1fr;gap:20px;margin-bottom:20px}}
+.salary-budget{margin:0 0 24px;padding:24px;background:var(--panel);border-radius:20px;color:var(--text)}
+.salary-budget-heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
+.salary-budget-heading h3{font-size:1rem;font-weight:700}
+.salary-budget-heading>strong{font-size:1.6rem;letter-spacing:-.03em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;min-width:0}
+.salary-meter{height:16px;background:var(--panel-deep);border-radius:8px;overflow:hidden}
+.salary-meter>span{display:block;height:100%;width:0;background:var(--positive);border-radius:inherit;transition:width .3s ease-out}
+.salary-budget-details{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;margin-top:14px;font-size:.8rem;color:var(--muted)}
+.salary-budget-details strong{color:var(--text);font-variant-numeric:tabular-nums;margin-left:6px}
+.salary-budget p{margin-top:12px;color:var(--muted);font-size:.8rem;line-height:1.6}
+@media(max-width:580px){.salary-budget{padding:22px 20px;margin-bottom:20px}.salary-budget-heading{align-items:flex-start;flex-direction:column;gap:6px}.salary-budget-details{flex-direction:column;gap:8px}}
+@media(prefers-reduced-motion:reduce){.salary-meter>span{transition:none}}

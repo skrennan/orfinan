@@ -744,6 +744,26 @@ function getPaidFixedTotalForMonth(month = selectedMonth()) {
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 }
 
+function renderSalaryBudget(baseIncome, paidExpenses) {
+  // Work in cents so the displayed remainder agrees with the displayed payments.
+  const base = Math.round(baseIncome * 100);
+  const spent = Math.round(paidExpenses * 100);
+  const available = (base - spent) / 100;
+  const percent = base > 0 ? Math.max(0, Math.min(100, (base - spent) / base * 100)) : 0;
+  $("#salaryAvailable").textContent = money(available);
+  $("#salaryAvailable").classList.toggle("negative", available < 0);
+  $("#salaryBase").textContent = money(base / 100);
+  $("#salarySpent").textContent = money(spent / 100);
+  $("#salaryMeterFill").style.width = `${percent}%`;
+  $("#salaryMeter").setAttribute("aria-valuenow", String(percent));
+  $("#salaryMeter").setAttribute("aria-valuetext", `${money(available)} disponíveis de ${money(base / 100)} de renda mensal; ${money(spent / 100)} em despesas pagas.`);
+  $("#salaryBudgetHint").textContent = base <= 0
+    ? "Cadastre sua renda mensal nas configurações para acompanhar o disponível."
+    : available < 0
+      ? `As despesas pagas ultrapassaram sua renda mensal em ${money(-available)}. Receitas extras não entram neste cálculo.`
+      : `${percent.toFixed(1).replace(".", ",")}% da renda mensal disponível. Desconta contas fixas pagas e despesas lançadas no mês; receitas extras ficam fora.`;
+}
+
 function renderHeroSummary({ baseIncome, extraIncome, fixed, variable, balance }) {
   const totalIncome = baseIncome + extraIncome;
   const free = Math.max(0, balance);
@@ -760,6 +780,7 @@ function renderHeroSummary({ baseIncome, extraIncome, fixed, variable, balance }
   // despesas variáveis + gastos fixos já marcados como pagos.
   const paidFixed = getPaidFixedTotalForMonth(selectedMonth());
   const totalExpense = paidFixed + variable;
+  renderSalaryBudget(baseIncome, totalExpense);
 
   // "Fixos" continua representando o comprometimento previsto do mês.
   const commitment = totalIncome > 0 ? (fixed / totalIncome) * 100 : 0;
