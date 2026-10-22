@@ -206,6 +206,16 @@ let browser, socket;
   assert.equal(await evaluate('$("#dashboard").inert'),true,'Background inert with settings open');
   assert.ok(await evaluate(`Number(getComputedStyle($('#settingsPanel')).zIndex)>Number(getComputedStyle($('.app-header')).zIndex)`),'Settings above header');
   await screenshot('settings-mobile',390,844);
+  for (const kind of ['Fixed', 'Income']) {
+    await evaluate(`$('#settings${kind}List .mini-edit').scrollIntoView({block:'center'}); $('#settings${kind}List .mini-edit').click();`);
+    assert.equal(await evaluate('document.activeElement.id'),`settings${kind}Name`,`${kind}: editing focuses the populated name field`);
+    assert.equal(await evaluate(`$('#settings${kind}EditId').value`),kind === 'Fixed' ? 'f' : 'i');
+    assert.equal(await evaluate(`$('#settings${kind}Amount').value`),kind === 'Fixed' ? '100' : '3000');
+    assert.ok(await evaluate(`(()=>{const field=$('#settings${kind}Name').getBoundingClientRect();const header=$('#settingsPanel .modal-head').getBoundingClientRect();return field.top>=header.bottom && field.bottom<=window.innerHeight;})()`),`${kind}: edit field is visible below the sticky header without manual scrolling`);
+    await screenshot(`settings-edit-${kind.toLowerCase()}-mobile`,390,844);
+    await evaluate(`$('#cancel${kind}Edit').click();`);
+  }
+  console.log('PASS recurring bill and income editing automatically reveals and focuses the populated form');
   await evaluate(`$('#closeSettings').focus(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true}));`);
   assert.equal(await evaluate('document.activeElement.id'),'resetAppBtn','Settings Tab loop');
   await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));`);

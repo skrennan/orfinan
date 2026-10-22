@@ -986,6 +986,11 @@ function handleSettingsEdit(event) {
     $("#cancelFixedEdit").classList.remove("hidden");
     $("#saveFixedSetting").textContent = "Salvar alterações";
   }
+  const nameField = $(kind === "income" ? "#settingsIncomeName" : "#settingsFixedName");
+  // Keep focus in the edit form and reveal it inside the scrollable settings dialog.
+  // An immediate scroll also avoids competing with the mobile keyboard animation.
+  nameField.focus({ preventScroll: true });
+  nameField.scrollIntoView({ block: "center", behavior: "instant" });
   return true;
 }
 
