@@ -986,11 +986,17 @@ function handleSettingsEdit(event) {
     $("#cancelFixedEdit").classList.remove("hidden");
     $("#saveFixedSetting").textContent = "Salvar alterações";
   }
-  const nameField = $(kind === "income" ? "#settingsIncomeName" : "#settingsFixedName");
-  // Keep focus in the edit form and reveal it inside the scrollable settings dialog.
-  // An immediate scroll also avoids competing with the mobile keyboard animation.
-  nameField.focus({ preventScroll: true });
-  nameField.scrollIntoView({ block: "center", behavior: "instant" });
+  const form = $(kind === "income" ? "#settingsIncomeForm" : "#settingsFixedForm");
+  const dialog = $("#settingsPanel .modal");
+  const heading = form.previousElementSibling;
+  // Focus the form without opening the phone keyboard. Scroll the actual dialog,
+  // placing the whole edit section just below its sticky header.
+  form.setAttribute("tabindex", "-1");
+  form.focus({ preventScroll: true });
+  const dialogTop = dialog.getBoundingClientRect().top;
+  const headerHeight = $("#settingsPanel .modal-head").getBoundingClientRect().height;
+  const sectionTop = heading.getBoundingClientRect().top - dialogTop + dialog.scrollTop;
+  dialog.scrollTo({ top: Math.max(0, sectionTop - headerHeight - 16), behavior: "instant" });
   return true;
 }
 

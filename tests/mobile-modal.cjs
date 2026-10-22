@@ -208,10 +208,11 @@ let browser, socket;
   await screenshot('settings-mobile',390,844);
   for (const kind of ['Fixed', 'Income']) {
     await evaluate(`$('#settings${kind}List .mini-edit').scrollIntoView({block:'center'}); $('#settings${kind}List .mini-edit').click();`);
-    assert.equal(await evaluate('document.activeElement.id'),`settings${kind}Name`,`${kind}: editing focuses the populated name field`);
+    assert.equal(await evaluate('document.activeElement.id'),`settings${kind}Form`,`${kind}: editing focuses the form without opening the keyboard`);
     assert.equal(await evaluate(`$('#settings${kind}EditId').value`),kind === 'Fixed' ? 'f' : 'i');
     assert.equal(await evaluate(`$('#settings${kind}Amount').value`),kind === 'Fixed' ? '100' : '3000');
     assert.ok(await evaluate(`(()=>{const field=$('#settings${kind}Name').getBoundingClientRect();const header=$('#settingsPanel .modal-head').getBoundingClientRect();return field.top>=header.bottom && field.bottom<=window.innerHeight;})()`),`${kind}: edit field is visible below the sticky header without manual scrolling`);
+    assert.ok(await evaluate(`(()=>{const form=$('#settings${kind}Form');const heading=form.previousElementSibling.getBoundingClientRect();const header=$('#settingsPanel .modal-head').getBoundingClientRect();const save=form.querySelector('[type=submit]').getBoundingClientRect();return heading.top>=header.bottom && save.bottom<=window.innerHeight;})()`),`${kind}: section heading, fields and save button are visible together`);
     await screenshot(`settings-edit-${kind.toLowerCase()}-mobile`,390,844);
     await evaluate(`$('#cancel${kind}Edit').click();`);
   }
